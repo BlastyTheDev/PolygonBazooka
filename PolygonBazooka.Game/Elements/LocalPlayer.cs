@@ -17,11 +17,34 @@ public partial class LocalPlayer : CompositeDrawable
     /// </summary>
     private readonly TileType[,] tiles = new TileType[Const.ROWS, Const.COLS];
 
+    private static LocalPlayer instance;
+
+    public static LocalPlayer GetInstance()
+    {
+        return instance ??= new LocalPlayer();
+    }
+
     public LocalPlayer()
     {
         AutoSizeAxes = Axes.Both;
         Origin = Anchor.Centre;
         resetBoard();
+    }
+
+    public void SetTile(int row, int col, TileType type)
+    {
+        tiles[row, col] = type;
+    }
+
+    public int GetLowestEmptyYInCol(int col)
+    {
+        for (int row = 0; row < Const.ROWS - 1; row++)
+        {
+            if (tiles[row, col] == TileType.Empty)
+                return row;
+        }
+
+        return Const.ROWS - 1;
     }
 
     private void processGravity()
@@ -61,7 +84,7 @@ public partial class LocalPlayer : CompositeDrawable
     private void load(TextureStore textures)
     {
         Texture texture = textures.Get("board");
-        texture.ScaleAdjust = 0.5f;
+        texture.ScaleAdjust = Const.SCALE_ADJUST;
         InternalChild = new Container
         {
             AutoSizeAxes = Axes.Both,

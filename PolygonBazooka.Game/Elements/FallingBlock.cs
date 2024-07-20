@@ -8,6 +8,8 @@ public class FallingBlock
 {
     private readonly TileType[] tiles = new TileType[2];
 
+    private readonly LocalPlayer player = LocalPlayer.GetInstance();
+
     private int xTop { get; set; } = 3;
     private int yTop { get; set; } = -3;
     private int xBot { get; set; } = 3;
@@ -43,16 +45,25 @@ public class FallingBlock
 
     public void Flip()
     {
-        (tiles[0], tiles[1]) = (tiles[1], tiles[0]);
+        if (isSideways()) (xTop, xBot) = (xBot, xTop);
+        else (yTop, yBot) = (yBot, yTop);
     }
 
+    // TODO: drop the lower block first
     public void Drop()
     {
+        player.SetTile(xTop, player.GetLowestEmptyYInCol(xTop), tiles[0]);
+        player.SetTile(xBot, player.GetLowestEmptyYInCol(xBot), tiles[1]);
     }
 
     public FallingBlock(TileType top, TileType bottom)
     {
         tiles[0] = top;
         tiles[1] = bottom;
+    }
+
+    private bool isSideways()
+    {
+        return xTop == xBot;
     }
 }

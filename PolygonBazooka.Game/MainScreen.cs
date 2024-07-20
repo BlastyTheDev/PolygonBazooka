@@ -12,10 +12,7 @@ public partial class MainScreen : Screen
     {
         InternalChildren = new Drawable[]
         {
-            new LocalPlayer
-            {
-                // Anchor = Anchor.Centre,
-            },
+            LocalPlayer.GetInstance(),
         };
     }
 }

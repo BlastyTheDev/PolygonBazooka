@@ -11,7 +11,7 @@ public partial class PolygonBazookaGame : PolygonBazookaGameBase
 {
     private ScreenStack screenStack;
 
-    private readonly LocalPlayer player = new();
+    private readonly LocalPlayer player = LocalPlayer.GetInstance();
 
     [BackgroundDependencyLoader]
     private void load()
