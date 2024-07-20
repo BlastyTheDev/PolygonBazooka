@@ -1,6 +1,7 @@
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Textures;
 using osu.Framework.IO.Stores;
 using osuTK;
 using PolygonBazooka.Resources;
@@ -14,6 +15,9 @@ namespace PolygonBazooka.Game
         // the screen scaling for all components including the test browser and framework overlays.
 
         protected override Container<Drawable> Content { get; }
+
+        // Prevent blurring when upscaling textures
+        protected override TextureFilteringMode DefaultTextureFilteringMode => TextureFilteringMode.Nearest;
 
         protected PolygonBazookaGameBase()
         {

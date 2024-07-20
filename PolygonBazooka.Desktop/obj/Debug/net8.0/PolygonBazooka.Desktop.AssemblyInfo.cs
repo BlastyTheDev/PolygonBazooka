@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PolygonBazooka")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.0.0+2198b7056373ea61fb63141143446468201cc36b")]
 [assembly: System.Reflection.AssemblyProductAttribute("PolygonBazooka")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PolygonBazooka")]
 [assembly: System.Reflection.AssemblyVersionAttribute("0.0.0.0")]
