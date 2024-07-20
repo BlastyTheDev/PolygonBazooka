@@ -1,0 +1,191 @@
+{
+  "format": 1,
+  "restore": {
+    "/home/blasty/RiderProjects/PolygonBazooka/PolygonBazooka.Game.Tests/PolygonBazooka.Game.Tests.csproj": {}
+  },
+  "projects": {
+    "/home/blasty/RiderProjects/PolygonBazooka/PolygonBazooka.Game.Tests/PolygonBazooka.Game.Tests.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/blasty/RiderProjects/PolygonBazooka/PolygonBazooka.Game.Tests/PolygonBazooka.Game.Tests.csproj",
+        "projectName": "PolygonBazooka.Game.Tests",
+        "projectPath": "/home/blasty/RiderProjects/PolygonBazooka/PolygonBazooka.Game.Tests/PolygonBazooka.Game.Tests.csproj",
+        "packagesPath": "/home/blasty/.nuget/packages/",
+        "outputPath": "/home/blasty/RiderProjects/PolygonBazooka/PolygonBazooka.Game.Tests/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/blasty/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "/home/blasty/RiderProjects/PolygonBazooka/PolygonBazooka.Game/PolygonBazooka.Game.csproj": {
+                "projectPath": "/home/blasty/RiderProjects/PolygonBazooka/PolygonBazooka.Game/PolygonBazooka.Game.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "Microsoft.NET.Test.Sdk": {
+              "target": "Package",
+              "version": "[17.0.0, )"
+            },
+            "NUnit3TestAdapter": {
+              "target": "Package",
+              "version": "[4.4.2, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/home/blasty/.dotnet/sdk/8.0.303/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/home/blasty/RiderProjects/PolygonBazooka/PolygonBazooka.Game/PolygonBazooka.Game.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/blasty/RiderProjects/PolygonBazooka/PolygonBazooka.Game/PolygonBazooka.Game.csproj",
+        "projectName": "PolygonBazooka.Game",
+        "projectPath": "/home/blasty/RiderProjects/PolygonBazooka/PolygonBazooka.Game/PolygonBazooka.Game.csproj",
+        "packagesPath": "/home/blasty/.nuget/packages/",
+        "outputPath": "/home/blasty/RiderProjects/PolygonBazooka/PolygonBazooka.Game/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/blasty/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "/home/blasty/RiderProjects/PolygonBazooka/PolygonBazooka.Resources/PolygonBazooka.Resources.csproj": {
+                "projectPath": "/home/blasty/RiderProjects/PolygonBazooka/PolygonBazooka.Resources/PolygonBazooka.Resources.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "ppy.osu.Framework": {
+              "target": "Package",
+              "version": "[2024.716.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/home/blasty/.dotnet/sdk/8.0.303/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/home/blasty/RiderProjects/PolygonBazooka/PolygonBazooka.Resources/PolygonBazooka.Resources.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/blasty/RiderProjects/PolygonBazooka/PolygonBazooka.Resources/PolygonBazooka.Resources.csproj",
+        "projectName": "PolygonBazooka.Resources",
+        "projectPath": "/home/blasty/RiderProjects/PolygonBazooka/PolygonBazooka.Resources/PolygonBazooka.Resources.csproj",
+        "packagesPath": "/home/blasty/.nuget/packages/",
+        "outputPath": "/home/blasty/RiderProjects/PolygonBazooka/PolygonBazooka.Resources/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/blasty/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/home/blasty/.dotnet/sdk/8.0.303/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

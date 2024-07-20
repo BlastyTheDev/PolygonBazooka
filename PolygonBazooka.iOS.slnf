@@ -1,0 +1,10 @@
+{
+  "solution": {
+    "path": "PolygonBazooka.sln",
+    "projects": [
+      "PolygonBazooka.Game\\PolygonBazooka.Game.csproj",
+      "PolygonBazooka.Resources\\PolygonBazooka.Resources.csproj",
+      "PolygonBazooka.iOS\\PolygonBazooka.iOS.csproj"
+    ]
+  }
+}
