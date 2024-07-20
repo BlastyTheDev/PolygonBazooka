@@ -11,10 +11,50 @@ namespace PolygonBazooka.Game.Elements;
 /// </summary>
 public partial class LocalPlayer : CompositeDrawable
 {
+    /// <summary>
+    /// 12x7 grid of tiles.
+    /// [row, col]
+    /// </summary>
+    private readonly TileType[,] tiles = new TileType[Const.ROWS, Const.COLS];
+
     public LocalPlayer()
     {
         AutoSizeAxes = Axes.Both;
         Origin = Anchor.Centre;
+        resetBoard();
+    }
+
+    private void processGravity()
+    {
+        // start at second to bottom row
+        for (int row = Const.ROWS - 2; row >= 0; row--)
+        {
+            for (int col = 0; col < Const.COLS - 1; col++)
+            {
+                int currentRow = row;
+
+                // while the row being checked is above the bottom row and the tile below is empty
+                while (currentRow < Const.ROWS - 1 && tiles[currentRow + 1, col] == TileType.Empty)
+                {
+                    // move the tile down
+                    tiles[currentRow + 1, col] = tiles[currentRow, col];
+                    tiles[currentRow, col] = TileType.Empty;
+                    // check the row below
+                    currentRow++;
+                }
+            }
+        }
+    }
+
+    private void resetBoard()
+    {
+        for (int row = 0; row < 12; row++)
+        {
+            for (int col = 0; col < 7; col++)
+            {
+                tiles[row, col] = TileType.Empty;
+            }
+        }
     }
 
     [BackgroundDependencyLoader]

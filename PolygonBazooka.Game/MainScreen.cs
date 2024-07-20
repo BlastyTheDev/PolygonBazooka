@@ -3,20 +3,19 @@ using osu.Framework.Graphics;
 using osu.Framework.Screens;
 using PolygonBazooka.Game.Elements;
 
-namespace PolygonBazooka.Game
+namespace PolygonBazooka.Game;
+
+public partial class MainScreen : Screen
 {
-    public partial class MainScreen : Screen
+    [BackgroundDependencyLoader]
+    private void load()
     {
-        [BackgroundDependencyLoader]
-        private void load()
+        InternalChildren = new Drawable[]
         {
-            InternalChildren = new Drawable[]
+            new LocalPlayer
             {
-                new LocalPlayer
-                {
-                    // Anchor = Anchor.Centre,
-                },
-            };
-        }
+                // Anchor = Anchor.Centre,
+            },
+        };
     }
 }
