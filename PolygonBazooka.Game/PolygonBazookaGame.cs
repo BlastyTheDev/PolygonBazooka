@@ -2,8 +2,6 @@
 using osu.Framework.Graphics;
 using osu.Framework.Input.Events;
 using osu.Framework.Screens;
-using osuTK.Input;
-using PolygonBazooka.Game.Elements;
 
 namespace PolygonBazooka.Game;
 
@@ -13,7 +11,6 @@ public partial class PolygonBazookaGame : PolygonBazookaGameBase
 
     // Start as playing for now
     private GameState gameState = GameState.Playing;
-    private readonly LocalPlayer player = LocalPlayer.INSTANCE;
 
     [BackgroundDependencyLoader]
     private void load()
@@ -30,36 +27,36 @@ public partial class PolygonBazookaGame : PolygonBazookaGameBase
         screenStack.Push(new MainScreen());
     }
 
-    protected override bool OnKeyDown(KeyDownEvent e)
-    {
-        if (gameState == GameState.Playing)
-        {
-            switch (e.Key)
-            {
-                case Key.Left:
-                    player.FallingBlock.MoveLeft();
-                    break;
-
-                case Key.Right:
-                    player.FallingBlock.MoveRight();
-                    break;
-
-                case Key.Down:
-                    player.HardDropFallingBlock();
-                    break;
-
-                case Key.Up:
-                    player.FallingBlock.RotateCw();
-                    break;
-
-                case Key.Space:
-                    player.FallingBlock.Drop();
-                    break;
-            }
-        }
-
-        return true;
-    }
+    // protected override bool OnKeyDown(KeyDownEvent e)
+    // {
+    //     if (gameState == GameState.Playing)
+    //     {
+    //         switch (e.Key)
+    //         {
+    //             case Key.Left:
+    //                 player.FallingBlock.MoveLeft();
+    //                 break;
+    //
+    //             case Key.Right:
+    //                 player.FallingBlock.MoveRight();
+    //                 break;
+    //
+    //             case Key.Down:
+    //                 player.HardDropFallingBlock();
+    //                 break;
+    //
+    //             case Key.Up:
+    //                 player.FallingBlock.RotateCw();
+    //                 break;
+    //
+    //             case Key.Space:
+    //                 player.FallingBlock.Drop();
+    //                 break;
+    //         }
+    //     }
+    //
+    //     return true;
+    // }
 
     protected override bool OnMouseDown(MouseDownEvent e)
     {

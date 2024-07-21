@@ -37,7 +37,7 @@ public partial class LocalPlayer : CompositeDrawable
             {
                 if (tiles[row, col] != TileType.Empty)
                 {
-                    AddInternal(new Tile(tiles[row, col], col, row));
+                    // AddInternal(new Tile(tiles[row, col], col, row));
                 }
             }
         }
@@ -108,7 +108,7 @@ public partial class LocalPlayer : CompositeDrawable
     private void load(TextureStore textures)
     {
         Texture texture = textures.Get("board");
-        texture.ScaleAdjust = Const.SCALE_ADJUST;
+        // texture.ScaleAdjust = Const.SCALE_ADJUST;
         InternalChild = new Container
         {
             AutoSizeAxes = Axes.Both,

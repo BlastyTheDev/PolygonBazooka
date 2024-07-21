@@ -1,3 +1,5 @@
+using osuTK;
+
 namespace PolygonBazooka.Game;
 
 public class Const
@@ -5,5 +7,5 @@ public class Const
     public const int ROWS = 12;
     public const int COLS = 7;
 
-    public const float SCALE_ADJUST = 0.5f;
+    public static readonly Vector2 SCALE_ADJUST = new(5f);
 }
