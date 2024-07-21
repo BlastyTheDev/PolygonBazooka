@@ -1,6 +1,5 @@
 using System;
 using osu.Framework.Allocation;
-using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 
 namespace PolygonBazooka.Game.Elements;
@@ -11,9 +10,9 @@ namespace PolygonBazooka.Game.Elements;
 /// </summary>
 public partial class FallingBlock : CompositeDrawable
 {
-    private readonly TileType[] tiles = new TileType[2];
+    private readonly TileType[] tiles = { TileType.Empty, TileType.Empty };
 
-    private readonly LocalPlayer player = LocalPlayer.GetInstance();
+    private readonly LocalPlayer player = LocalPlayer.INSTANCE;
 
     private int xTop { get; set; } = 3;
     private int yTop { get; set; } = -3;
@@ -23,11 +22,11 @@ public partial class FallingBlock : CompositeDrawable
     [BackgroundDependencyLoader]
     private void load()
     {
-        InternalChildren = new Drawable[]
-        {
-            new Tile(tiles[0], xTop, yTop),
-            new Tile(tiles[1], xBot, yBot),
-        };
+        // InternalChildren = new Drawable[]
+        // {
+        //     new Tile(tiles[0], xTop, yTop),
+        //     new Tile(tiles[1], xBot, yBot),
+        // };
     }
 
     public void MoveLeft()
@@ -122,6 +121,7 @@ public partial class FallingBlock : CompositeDrawable
         tiles[0] = types[random.Next(1, types.Length)];
         tiles[1] = types[random.Next(1, types.Length)];
         load();
+        Console.WriteLine(tiles.ToString());
     }
 
     private bool isSideways()

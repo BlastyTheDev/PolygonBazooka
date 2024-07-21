@@ -18,25 +18,35 @@ public partial class LocalPlayer : CompositeDrawable
     /// </summary>
     private readonly TileType[,] tiles = new TileType[Const.ROWS, Const.COLS];
 
-    public FallingBlock FallingBlock { get; } = new();
+    public FallingBlock FallingBlock = new();
 
-    private static readonly LocalPlayer instance = new();
+    public static readonly LocalPlayer INSTANCE = new();
 
-    public static LocalPlayer GetInstance()
-    {
-        return instance;
-    }
-
-    public LocalPlayer()
+    private LocalPlayer()
     {
         AutoSizeAxes = Axes.Both;
         Origin = Anchor.Centre;
         resetBoard();
     }
 
+    private void boardChanged()
+    {
+        for (int row = 0; row < Const.ROWS - 1; row++)
+        {
+            for (int col = 0; col < Const.COLS - 1; col++)
+            {
+                if (tiles[row, col] != TileType.Empty)
+                {
+                    AddInternal(new Tile(tiles[row, col], col, row));
+                }
+            }
+        }
+    }
+
     public void HardDropFallingBlock()
     {
         FallingBlock.Drop();
+        boardChanged();
         processGravity();
         FallingBlock.NextFallingBlock();
     }
@@ -77,6 +87,8 @@ public partial class LocalPlayer : CompositeDrawable
                 }
             }
         }
+
+        boardChanged();
     }
 
     private void resetBoard()
@@ -88,6 +100,8 @@ public partial class LocalPlayer : CompositeDrawable
                 tiles[row, col] = TileType.Empty;
             }
         }
+
+        boardChanged();
     }
 
     [BackgroundDependencyLoader]

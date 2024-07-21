@@ -12,7 +12,7 @@ public partial class MainScreen : Screen
     {
         InternalChildren = new Drawable[]
         {
-            LocalPlayer.GetInstance(),
+            LocalPlayer.INSTANCE,
         };
     }
 }

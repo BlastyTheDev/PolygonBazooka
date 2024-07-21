@@ -11,7 +11,9 @@ public partial class PolygonBazookaGame : PolygonBazookaGameBase
 {
     private ScreenStack screenStack;
 
-    private readonly LocalPlayer player = LocalPlayer.GetInstance();
+    // Start as playing for now
+    private GameState gameState = GameState.Playing;
+    private readonly LocalPlayer player = LocalPlayer.INSTANCE;
 
     [BackgroundDependencyLoader]
     private void load()
@@ -30,27 +32,30 @@ public partial class PolygonBazookaGame : PolygonBazookaGameBase
 
     protected override bool OnKeyDown(KeyDownEvent e)
     {
-        switch (e.Key)
+        if (gameState == GameState.Playing)
         {
-            case Key.Left:
-                player.FallingBlock.MoveLeft();
-                break;
+            switch (e.Key)
+            {
+                case Key.Left:
+                    player.FallingBlock.MoveLeft();
+                    break;
 
-            case Key.Right:
-                player.FallingBlock.MoveRight();
-                break;
+                case Key.Right:
+                    player.FallingBlock.MoveRight();
+                    break;
 
-            case Key.Down:
-                player.HardDropFallingBlock();
-                break;
+                case Key.Down:
+                    player.HardDropFallingBlock();
+                    break;
 
-            case Key.Up:
-                player.FallingBlock.RotateCw();
-                break;
+                case Key.Up:
+                    player.FallingBlock.RotateCw();
+                    break;
 
-            case Key.Space:
-                player.FallingBlock.Drop();
-                break;
+                case Key.Space:
+                    player.FallingBlock.Drop();
+                    break;
+            }
         }
 
         return true;
