@@ -3,6 +3,7 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.Textures;
+using osuTK;
 
 namespace PolygonBazooka.Game.Elements;
 
@@ -17,11 +18,13 @@ public partial class LocalPlayer : CompositeDrawable
     /// </summary>
     private readonly TileType[,] tiles = new TileType[Const.ROWS, Const.COLS];
 
-    private static LocalPlayer instance;
+    public FallingBlock FallingBlock { get; } = new();
+
+    private static readonly LocalPlayer instance = new();
 
     public static LocalPlayer GetInstance()
     {
-        return instance ??= new LocalPlayer();
+        return instance;
     }
 
     public LocalPlayer()
@@ -29,6 +32,13 @@ public partial class LocalPlayer : CompositeDrawable
         AutoSizeAxes = Axes.Both;
         Origin = Anchor.Centre;
         resetBoard();
+    }
+
+    public void HardDropFallingBlock()
+    {
+        FallingBlock.Drop();
+        processGravity();
+        FallingBlock.NextFallingBlock();
     }
 
     public void SetTile(int row, int col, TileType type)
@@ -96,7 +106,10 @@ public partial class LocalPlayer : CompositeDrawable
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
                     Texture = texture,
-                }
+                    // tile render location debug
+                    Position = new Vector2(100, 100),
+                },
+                FallingBlock,
             }
         };
     }

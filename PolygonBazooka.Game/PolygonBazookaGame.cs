@@ -1,8 +1,8 @@
-﻿using System;
-using osu.Framework.Allocation;
+﻿using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Input.Events;
 using osu.Framework.Screens;
+using osuTK.Input;
 using PolygonBazooka.Game.Elements;
 
 namespace PolygonBazooka.Game;
@@ -30,7 +30,29 @@ public partial class PolygonBazookaGame : PolygonBazookaGameBase
 
     protected override bool OnKeyDown(KeyDownEvent e)
     {
-        Console.WriteLine("Key down: " + e.Key);
+        switch (e.Key)
+        {
+            case Key.Left:
+                player.FallingBlock.MoveLeft();
+                break;
+
+            case Key.Right:
+                player.FallingBlock.MoveRight();
+                break;
+
+            case Key.Down:
+                player.HardDropFallingBlock();
+                break;
+
+            case Key.Up:
+                player.FallingBlock.RotateCw();
+                break;
+
+            case Key.Space:
+                player.FallingBlock.Drop();
+                break;
+        }
+
         return true;
     }
 
