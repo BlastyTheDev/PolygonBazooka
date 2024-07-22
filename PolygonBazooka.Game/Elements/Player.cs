@@ -1,17 +1,17 @@
 using System;
+using System.Collections.Generic;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Animations;
 using osu.Framework.Graphics.Containers;
-using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.Textures;
-using osuTK;
 
 namespace PolygonBazooka.Game.Elements;
 
 public partial class Player : CompositeDrawable
 {
     private TileType[,] board { get; }
+    private readonly List<Tile> renderedTiles = new();
 
     // origin tile of the falling block
     private TileType fallingBlockOrigin { get; set; } = TileType.Yellow;
@@ -79,10 +79,10 @@ public partial class Player : CompositeDrawable
 
     protected override void Update()
     {
+        base.Update();
         Console.WriteLine("Origin X: " + xOrigin + " Y: " + yOrigin);
         Console.WriteLine("Orbit X: " + xOrbit + " Y: " + yOrbit);
-        base.Update();
-        renderTiles();
+        // renderTiles();
     }
 
     private void renderTiles()
@@ -94,58 +94,56 @@ public partial class Player : CompositeDrawable
             {
                 if (board[row, col] != TileType.Empty)
                 {
-                    AddInternal(new Sprite
-                    {
-                        Texture = getTileAnimation(board[row, col]).CurrentFrame,
-                        Position = new Vector2(2 + col * 8, 2 + row * 8),
-                    });
+                    var tile = new Tile(col, row, getTileAnimation(board[row, col]));
+                    AddInternal(tile);
+                    renderedTiles.Add(tile);
                 }
             }
         }
 
         // render falling block tiles
-        if (fallingBlockOrigin != TileType.Empty && fallingBlockOrbit != TileType.Empty)
-        {
-            AddInternal(new Sprite
-            {
-                Texture = getTileAnimation(fallingBlockOrigin).CurrentFrame,
-                Position = new Vector2(2 + xOrigin * 8, 2 + yOrigin * 8),
-            });
-            AddInternal(new Sprite
-            {
-                Texture = getTileAnimation(fallingBlockOrbit).CurrentFrame,
-                Position = new Vector2(2 + xOrbit * 8, 2 + yOrbit * 8),
-            });
-        }
-
-        // render next in queue
-        if (nextBlockOrigin != TileType.Empty && nextBlockOrbit != TileType.Empty)
-        {
-            AddInternal(new Sprite
-            {
-                Texture = getTileAnimation(nextBlockOrigin).CurrentFrame,
-                Position = new Vector2(4 + 8 * 7, 7),
-            });
-            AddInternal(new Sprite
-            {
-                Texture = getTileAnimation(nextBlockOrbit).CurrentFrame,
-                Position = new Vector2(4 + 8 * 7, 15),
-            });
-        }
-
-        if (nextNextBlockOrigin != TileType.Empty && nextNextBlockOrbit != TileType.Empty)
-        {
-            AddInternal(new Sprite
-            {
-                Texture = getTileAnimation(nextNextBlockOrigin).CurrentFrame,
-                Position = new Vector2(4 + 8 * 7, 25),
-            });
-            AddInternal(new Sprite
-            {
-                Texture = getTileAnimation(nextNextBlockOrbit).CurrentFrame,
-                Position = new Vector2(4 + 8 * 7, 33),
-            });
-        }
+        // if (fallingBlockOrigin != TileType.Empty && fallingBlockOrbit != TileType.Empty)
+        // {
+        //     AddInternal(new Sprite
+        //     {
+        //         Texture = getTileAnimation(fallingBlockOrigin).CurrentFrame,
+        //         Position = new Vector2(2 + xOrigin * 8, 2 + yOrigin * 8),
+        //     });
+        //     AddInternal(new Sprite
+        //     {
+        //         Texture = getTileAnimation(fallingBlockOrbit).CurrentFrame,
+        //         Position = new Vector2(2 + xOrbit * 8, 2 + yOrbit * 8),
+        //     });
+        // }
+        //
+        // // render next in queue
+        // if (nextBlockOrigin != TileType.Empty && nextBlockOrbit != TileType.Empty)
+        // {
+        //     AddInternal(new Sprite
+        //     {
+        //         Texture = getTileAnimation(nextBlockOrigin).CurrentFrame,
+        //         Position = new Vector2(4 + 8 * 7, 7),
+        //     });
+        //     AddInternal(new Sprite
+        //     {
+        //         Texture = getTileAnimation(nextBlockOrbit).CurrentFrame,
+        //         Position = new Vector2(4 + 8 * 7, 15),
+        //     });
+        // }
+        //
+        // if (nextNextBlockOrigin != TileType.Empty && nextNextBlockOrbit != TileType.Empty)
+        // {
+        //     AddInternal(new Sprite
+        //     {
+        //         Texture = getTileAnimation(nextNextBlockOrigin).CurrentFrame,
+        //         Position = new Vector2(4 + 8 * 7, 25),
+        //     });
+        //     AddInternal(new Sprite
+        //     {
+        //         Texture = getTileAnimation(nextNextBlockOrbit).CurrentFrame,
+        //         Position = new Vector2(4 + 8 * 7, 33),
+        //     });
+        // }
     }
 
     private TextureAnimation getTileAnimation(TileType type)
