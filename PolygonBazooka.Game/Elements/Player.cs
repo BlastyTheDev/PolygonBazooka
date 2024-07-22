@@ -14,10 +14,24 @@ public partial class Player : CompositeDrawable
     private TileType[,] board { get; }
 
     // origin tile of the falling block
-    private TileType fallingBlockOrigin { get; set; } = TileType.Empty;
+    private TileType fallingBlockOrigin { get; set; } = TileType.Yellow;
 
     // tile that orbits around the origin when rotated
-    private TileType fallingBlockOrbit { get; set; } = TileType.Empty;
+    private TileType fallingBlockOrbit { get; set; } = TileType.Green;
+
+    // position of the tile in board coordinates
+    private int xOrigin = 3;
+    private int yOrigin = -2;
+
+    private int xOrbit = 3;
+    private int yOrbit = -3;
+
+    // blocks in queue
+    private TileType nextBlockOrigin { get; set; } = TileType.Blue;
+    private TileType nextBlockOrbit { get; set; } = TileType.Bonus;
+
+    private TileType nextNextBlockOrigin { get; set; } = TileType.Green;
+    private TileType nextNextBlockOrbit { get; set; } = TileType.Red;
 
     public Player()
     {
@@ -63,21 +77,74 @@ public partial class Player : CompositeDrawable
         renderTiles();
     }
 
+    protected override void Update()
+    {
+        Console.WriteLine("Origin X: " + xOrigin + " Y: " + yOrigin);
+        Console.WriteLine("Orbit X: " + xOrbit + " Y: " + yOrbit);
+        base.Update();
+        renderTiles();
+    }
+
     private void renderTiles()
     {
-        for (int row = 0; row < Const.ROWS - 1; row++)
+        // render board tiles
+        for (int row = 0; row < Const.ROWS; row++)
         {
-            for (int col = 0; col < Const.COLS - 1; col++)
+            for (int col = 0; col < Const.COLS; col++)
             {
                 if (board[row, col] != TileType.Empty)
                 {
                     AddInternal(new Sprite
                     {
                         Texture = getTileAnimation(board[row, col]).CurrentFrame,
-                        Position = new Vector2(col, row) * Scale,
+                        Position = new Vector2(2 + col * 8, 2 + row * 8),
                     });
                 }
             }
+        }
+
+        // render falling block tiles
+        if (fallingBlockOrigin != TileType.Empty && fallingBlockOrbit != TileType.Empty)
+        {
+            AddInternal(new Sprite
+            {
+                Texture = getTileAnimation(fallingBlockOrigin).CurrentFrame,
+                Position = new Vector2(2 + xOrigin * 8, 2 + yOrigin * 8),
+            });
+            AddInternal(new Sprite
+            {
+                Texture = getTileAnimation(fallingBlockOrbit).CurrentFrame,
+                Position = new Vector2(2 + xOrbit * 8, 2 + yOrbit * 8),
+            });
+        }
+
+        // render next in queue
+        if (nextBlockOrigin != TileType.Empty && nextBlockOrbit != TileType.Empty)
+        {
+            AddInternal(new Sprite
+            {
+                Texture = getTileAnimation(nextBlockOrigin).CurrentFrame,
+                Position = new Vector2(4 + 8 * 7, 7),
+            });
+            AddInternal(new Sprite
+            {
+                Texture = getTileAnimation(nextBlockOrbit).CurrentFrame,
+                Position = new Vector2(4 + 8 * 7, 15),
+            });
+        }
+
+        if (nextNextBlockOrigin != TileType.Empty && nextNextBlockOrbit != TileType.Empty)
+        {
+            AddInternal(new Sprite
+            {
+                Texture = getTileAnimation(nextNextBlockOrigin).CurrentFrame,
+                Position = new Vector2(4 + 8 * 7, 25),
+            });
+            AddInternal(new Sprite
+            {
+                Texture = getTileAnimation(nextNextBlockOrbit).CurrentFrame,
+                Position = new Vector2(4 + 8 * 7, 33),
+            });
         }
     }
 
@@ -93,13 +160,6 @@ public partial class Player : CompositeDrawable
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null),
         };
     }
-
-    // position of the tile in board coordinates
-    protected int XOrigin { get; set; }
-    protected int YOrigin { get; set; }
-
-    protected int XOrbit { get; set; }
-    protected int YOrbit { get; set; }
 
     private void resetBoard()
     {
@@ -118,12 +178,12 @@ public partial class Player : CompositeDrawable
         // start at second to bottom row
         for (int row = Const.ROWS - 2; row >= 0; row--)
         {
-            for (int col = 0; col < Const.COLS - 1; col++)
+            for (int col = 0; col < Const.COLS; col++)
             {
                 int currentRow = row;
 
                 // while the row being checked is above the bottom row and the tile below is empty
-                while (currentRow < Const.ROWS - 1 && board[currentRow + 1, col] == TileType.Empty)
+                while (currentRow < Const.ROWS && board[currentRow + 1, col] == TileType.Empty)
                 {
                     // move the tile down
                     board[currentRow + 1, col] = board[currentRow, col];
@@ -137,40 +197,42 @@ public partial class Player : CompositeDrawable
 
     public void MoveLeft()
     {
-        XOrigin -= 1;
-        XOrbit -= 1;
+        Console.WriteLine("MoveLeft");
+        xOrigin -= 1;
+        xOrbit -= 1;
     }
 
     public void MoveRight()
     {
-        XOrigin += 1;
-        XOrbit += 1;
+        Console.WriteLine("MoveRight");
+        xOrigin += 1;
+        xOrbit += 1;
     }
 
     public void RotateCw()
     {
-        if (XOrbit + 1 > Const.COLS - 1)
+        if (xOrbit + 1 > Const.COLS - 1)
             MoveLeft();
-        XOrigin = XOrbit + 1;
-        YOrigin = YOrbit;
+        xOrigin = xOrbit + 1;
+        yOrigin = yOrbit;
     }
 
     public void RotateCcw()
     {
-        if (XOrbit - 1 < 0)
+        if (xOrbit - 1 < 0)
             MoveRight();
-        XOrigin = XOrbit - 1;
-        YOrigin = YOrbit;
+        xOrigin = xOrbit - 1;
+        yOrigin = yOrbit;
     }
 
     public void Flip()
     {
-        if (isSideways()) (XOrigin, XOrbit) = (XOrbit, XOrigin);
-        else (YOrigin, YOrbit) = (YOrbit, YOrigin);
+        if (isSideways()) (xOrigin, xOrbit) = (xOrbit, xOrigin);
+        else (yOrigin, yOrbit) = (yOrbit, yOrigin);
     }
 
     private bool isSideways()
     {
-        return XOrigin == XOrbit;
+        return xOrigin == xOrbit;
     }
 }

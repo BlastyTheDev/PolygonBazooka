@@ -12,7 +12,7 @@ public partial class TestScenePlayer : PolygonBazookaTestScene
         {
             Origin = Anchor.Centre,
             Anchor = Anchor.TopLeft,
-            Position = new Vector2(100, 100),
+            Position = new Vector2(100, 200),
         });
     }
 }
