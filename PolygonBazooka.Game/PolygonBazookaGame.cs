@@ -38,11 +38,11 @@ public partial class PolygonBazookaGame : PolygonBazookaGameBase
             switch (e.Key)
             {
                 case Key.Left:
-                    player.MoveLeft();
+                    player.MoveLeftInputDown();
                     return true;
 
                 case Key.Right:
-                    player.MoveRight();
+                    player.MoveRightInputDown();
                     return true;
 
                 // case Key.Down:
