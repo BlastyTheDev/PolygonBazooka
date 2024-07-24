@@ -13,15 +13,16 @@ public partial class Player : CompositeDrawable
 {
     private readonly TileType[,] board;
     private TileType[,] oldBoard;
+
     private readonly Sprite[,] renderedTiles;
+    private readonly Sprite[] renderedFallingTiles;
+    private readonly Sprite[] renderedQueueTiles;
 
     // origin tile of the falling block
     private TileType fallingBlockOrigin { get; set; }
 
     // tile that orbits around the origin when rotated
     private TileType fallingBlockOrbit { get; set; }
-
-    private readonly Sprite[] renderedFallingTiles;
 
     // position of the tile in board coordinates
     private int xOrigin;
@@ -38,8 +39,8 @@ public partial class Player : CompositeDrawable
     private TileType nextNextBlockOrbit { get; set; } = TileType.Red;
 
     // control handling things in ms
-    public float DelayedAutoShift = 500;
-    public float AutoRepeatRate = 100;
+    public float DelayedAutoShift = 200;
+    public float AutoRepeatRate = 50;
 
     private bool leftPressed;
     private long leftPressStart;
@@ -58,6 +59,7 @@ public partial class Player : CompositeDrawable
         oldBoard = board.Clone() as TileType[,];
         renderedTiles = new Sprite[Const.ROWS, Const.COLS];
         renderedFallingTiles = new Sprite[2];
+        renderedQueueTiles = new Sprite[4];
         resetBoard();
         SetFallingBlock(TileType.Yellow, TileType.Green);
     }
@@ -112,43 +114,40 @@ public partial class Player : CompositeDrawable
     protected override void Update()
     {
         base.Update();
-        // Console.WriteLine("Origin X: " + xOrigin + " Y: " + yOrigin);
-        // Console.WriteLine("Orbit X: " + xOrbit + " Y: " + yOrbit);
+
+        // TODO: implement instant ARR (0 ms)
 
         // left DAS
-        if (DateTimeOffset.Now.ToUnixTimeMilliseconds() - leftPressStart >= DelayedAutoShift && leftPressed && !leftDasActive)
-        {
-            moveLeft();
-            leftDasActive = true;
-            lastLeftAutoRepeat = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-        }
+        if (!leftPressed)
+            leftDasActive = false;
 
-        if ((leftDasActive && leftPressed) && DateTimeOffset.Now.ToUnixTimeMilliseconds() - lastLeftAutoRepeat > AutoRepeatRate)
+        if (DateTimeOffset.Now.ToUnixTimeMilliseconds() - leftPressStart >= DelayedAutoShift && leftPressed && !leftDasActive)
+            leftDasActive = true;
+
+        if (leftDasActive && leftPressed && DateTimeOffset.Now.ToUnixTimeMilliseconds() - lastLeftAutoRepeat >= AutoRepeatRate)
         {
             moveLeft();
             lastLeftAutoRepeat = DateTimeOffset.Now.ToUnixTimeMilliseconds();
         }
 
         // right DAS
+        if (!rightPressed)
+            rightDasActive = false;
+
         if (DateTimeOffset.Now.ToUnixTimeMilliseconds() - rightPressStart >= DelayedAutoShift && rightPressed && !rightDasActive)
-        {
-            moveRight();
             rightDasActive = true;
-            lastRightAutoRepeat = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-        }
 
-        if ((rightDasActive && rightPressed) && DateTimeOffset.Now.ToUnixTimeMilliseconds() - lastRightAutoRepeat > AutoRepeatRate)
+        if (rightDasActive && rightPressed && DateTimeOffset.Now.ToUnixTimeMilliseconds() - lastRightAutoRepeat >= AutoRepeatRate)
         {
             moveRight();
             lastRightAutoRepeat = DateTimeOffset.Now.ToUnixTimeMilliseconds();
         }
 
-        // clear
+        // TODO: implement clearing
 
         processGravity();
 
         renderTiles();
-        Console.WriteLine("sprite count: " + (renderedTiles.Length + renderedFallingTiles.Length));
 
         oldBoard = board.Clone() as TileType[,];
     }
@@ -188,15 +187,17 @@ public partial class Player : CompositeDrawable
         if (fallingBlockOrigin != TileType.Empty && fallingBlockOrbit != TileType.Empty)
         {
             Sprite origin = createTileSprite(yOrigin, xOrigin, fallingBlockOrigin);
-            // Sprite oldOrigin = renderedFallingTiles[0];
+            Sprite oldOrigin = renderedFallingTiles[0];
+            if (oldOrigin != null)
+                RemoveInternal(oldOrigin, false);
             renderedFallingTiles[0] = origin;
-            // oldOrigin?.Dispose();
             AddInternal(origin);
 
             Sprite orbit = createTileSprite(yOrbit, xOrbit, fallingBlockOrbit);
-            // Sprite oldOrbit = renderedFallingTiles[1];
+            Sprite oldOrbit = renderedFallingTiles[1];
+            if (oldOrbit != null)
+                RemoveInternal(oldOrbit, false);
             renderedFallingTiles[1] = orbit;
-            // oldOrbit?.Dispose();
             AddInternal(orbit);
         }
 
@@ -270,17 +271,37 @@ public partial class Player : CompositeDrawable
     public void MoveLeftInputDown()
     {
         rightPressed = false;
+
+        if (!leftPressed)
+        {
+            leftPressStart = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+            moveLeft();
+        }
+
         leftPressed = true;
-        leftPressStart = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-        moveLeft();
     }
 
     public void MoveRightInputDown()
     {
         leftPressed = false;
+
+        if (!rightPressed)
+        {
+            rightPressStart = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+            moveRight();
+        }
+
         rightPressed = true;
-        rightPressStart = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-        moveRight();
+    }
+
+    public void MoveLeftInputUp()
+    {
+        leftPressed = false;
+    }
+
+    public void MoveRightInputUp()
+    {
+        rightPressed = false;
     }
 
     private void moveLeft()
@@ -295,10 +316,11 @@ public partial class Player : CompositeDrawable
         xOrbit += 1;
     }
 
+    // TODO: properly implement rotation
     public void RotateCw()
     {
         if (xOrbit + 1 > Const.COLS - 1)
-            MoveLeftInputDown();
+            moveLeft();
         xOrigin = xOrbit + 1;
         yOrigin = yOrbit;
     }
@@ -306,7 +328,7 @@ public partial class Player : CompositeDrawable
     public void RotateCcw()
     {
         if (xOrbit - 1 < 0)
-            MoveRightInputDown();
+            moveRight();
         xOrigin = xOrbit - 1;
         yOrigin = yOrbit;
     }

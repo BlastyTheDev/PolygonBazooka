@@ -14,7 +14,7 @@ public partial class PolygonBazookaGame : PolygonBazookaGameBase
     // Start as playing for now
     private GameState gameState = GameState.Playing;
 
-    private readonly Player player = new();
+    private Player player;
 
     [BackgroundDependencyLoader]
     private void load()
@@ -28,7 +28,12 @@ public partial class PolygonBazookaGame : PolygonBazookaGameBase
     {
         base.LoadComplete();
 
-        screenStack.Push(new MainScreen());
+        screenStack.Push(new MainScreen(player = new Player
+        {
+            Origin = Anchor.Centre,
+            Anchor = Anchor.TopLeft,
+            Position = new(100, 200)
+        }));
     }
 
     protected override bool OnKeyDown(KeyDownEvent e)
@@ -45,21 +50,30 @@ public partial class PolygonBazookaGame : PolygonBazookaGameBase
                     player.MoveRightInputDown();
                     return true;
 
-                // case Key.Down:
-                //     player.();
-                //     break;
-
                 case Key.Up:
                     player.RotateCw();
                     return true;
-
-                // case Key.Space:
-                //     player.();
-                //     break;
             }
         }
 
         return false;
+    }
+
+    protected override void OnKeyUp(KeyUpEvent e)
+    {
+        if (gameState == GameState.Playing)
+        {
+            switch (e.Key)
+            {
+                case Key.Left:
+                    player.MoveLeftInputUp();
+                    break;
+
+                case Key.Right:
+                    player.MoveRightInputUp();
+                    break;
+            }
+        }
     }
 
     protected override bool OnMouseDown(MouseDownEvent e)

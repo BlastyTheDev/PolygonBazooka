@@ -1,6 +1,7 @@
 using osu.Framework.Graphics;
 using osu.Framework.Screens;
 using NUnit.Framework;
+using PolygonBazooka.Game.Elements;
 
 namespace PolygonBazooka.Game.Tests.Visual
 {
@@ -12,7 +13,12 @@ namespace PolygonBazooka.Game.Tests.Visual
 
         public TestSceneMainScreen()
         {
-            Add(new ScreenStack(new MainScreen()) { RelativeSizeAxes = Axes.Both });
+            Add(new ScreenStack(new MainScreen(new Player
+            {
+                Origin = Anchor.Centre,
+                Anchor = Anchor.TopLeft,
+                Position = new(100, 200)
+            })) { RelativeSizeAxes = Axes.Both });
         }
     }
 }
