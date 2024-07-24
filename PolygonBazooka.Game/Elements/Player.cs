@@ -16,7 +16,8 @@ public partial class Player : CompositeDrawable
 
     private readonly Sprite[,] renderedTiles;
     private readonly Sprite[] renderedFallingTiles;
-    private readonly Sprite[] renderedQueueTiles;
+    private readonly Sprite[] renderedSahdowTiles;
+    private readonly Sprite[] renderedQueueTile;
 
     // origin tile of the falling block
     private TileType fallingBlockOrigin { get; set; }
@@ -39,8 +40,8 @@ public partial class Player : CompositeDrawable
     private TileType nextNextBlockOrbit { get; set; } = TileType.Red;
 
     // control handling things in ms
-    public float DelayedAutoShift = 200;
-    public float AutoRepeatRate = 50;
+    public float DelayedAutoShift = 100;
+    public float AutoRepeatRate = 0;
 
     private bool leftPressed;
     private long leftPressStart;
@@ -59,7 +60,8 @@ public partial class Player : CompositeDrawable
         oldBoard = board.Clone() as TileType[,];
         renderedTiles = new Sprite[Const.ROWS, Const.COLS];
         renderedFallingTiles = new Sprite[2];
-        renderedQueueTiles = new Sprite[4];
+        renderedSahdowTiles = new Sprite[2];
+        renderedQueueTile = new Sprite[4];
         resetBoard();
         SetFallingBlock(TileType.Yellow, TileType.Green);
     }
@@ -126,7 +128,10 @@ public partial class Player : CompositeDrawable
 
         if (leftDasActive && leftPressed && DateTimeOffset.Now.ToUnixTimeMilliseconds() - lastLeftAutoRepeat >= AutoRepeatRate)
         {
-            moveLeft();
+            if (AutoRepeatRate == 0)
+                moveLeftFully();
+            else
+                moveLeft();
             lastLeftAutoRepeat = DateTimeOffset.Now.ToUnixTimeMilliseconds();
         }
 
@@ -139,13 +144,16 @@ public partial class Player : CompositeDrawable
 
         if (rightDasActive && rightPressed && DateTimeOffset.Now.ToUnixTimeMilliseconds() - lastRightAutoRepeat >= AutoRepeatRate)
         {
-            moveRight();
+            if (AutoRepeatRate == 0)
+                moveRightFully();
+            else
+                moveRight();
             lastRightAutoRepeat = DateTimeOffset.Now.ToUnixTimeMilliseconds();
         }
 
         // TODO: implement clearing
 
-        processGravity();
+        // processGravity();
 
         renderTiles();
 
@@ -183,7 +191,7 @@ public partial class Player : CompositeDrawable
             }
         }
 
-        // render falling block tiles
+        // render falling block tiles and shadow
         if (fallingBlockOrigin != TileType.Empty && fallingBlockOrbit != TileType.Empty)
         {
             Sprite origin = createTileSprite(yOrigin, xOrigin, fallingBlockOrigin);
@@ -199,26 +207,44 @@ public partial class Player : CompositeDrawable
                 RemoveInternal(oldOrbit, false);
             renderedFallingTiles[1] = orbit;
             AddInternal(orbit);
+
+            // Sprite originShadow = createTileSprite(yOrigin, xOrigin, fallingBlockOrigin);
+            // Sprite oldOriginShadow = renderedFallingTiles[0];
+            // if (oldOriginShadow != null)
+            //     RemoveInternal(oldOriginShadow, false);
+            // renderedFallingTiles[0] = originShadow;
+            // AddInternal(originShadow);
+            //
+            // Sprite orbitShadow = createTileSprite(yOrbit, xOrbit, fallingBlockOrbit);
+            // Sprite oldOrbitShadow = renderedFallingTiles[1];
+            // if (oldOrbitShadow != null)
+            //     RemoveInternal(oldOrbitShadow, false);
+            // renderedFallingTiles[1] = orbitShadow;
+            // AddInternal(orbitShadow);
         }
 
         // render next in queue
         if (nextBlockOrigin != TileType.Empty && nextBlockOrbit != TileType.Empty)
         {
-            Sprite origin = createTileSprite(0, 0, nextBlockOrigin, true, 7);
-            AddInternal(origin);
-
-            Sprite orbit = createTileSprite(1, 0, nextBlockOrbit, true, 15);
-            AddInternal(orbit);
+            renderQueueTile(nextBlockOrigin, 7, 0);
+            renderQueueTile(nextBlockOrbit, 15, 1);
         }
 
         if (nextNextBlockOrigin != TileType.Empty && nextNextBlockOrbit != TileType.Empty)
         {
-            Sprite origin = createTileSprite(0, 0, nextNextBlockOrigin, true, 25);
-            AddInternal(origin);
-
-            Sprite orbit = createTileSprite(1, 0, nextNextBlockOrbit, true, 33);
-            AddInternal(orbit);
+            renderQueueTile(nextNextBlockOrigin, 25, 2);
+            renderQueueTile(nextNextBlockOrbit, 33, 3);
         }
+    }
+
+    private void renderQueueTile(TileType type, int offset, int renderedIndex)
+    {
+        Sprite sprite = createTileSprite(0, 0, type, true, offset);
+        Sprite oldSprite = renderedQueueTile[renderedIndex];
+        if (oldSprite != null)
+            RemoveInternal(oldSprite, false);
+        renderedQueueTile[renderedIndex] = sprite;
+        AddInternal(sprite);
     }
 
     private TextureAnimation getTileAnimation(TileType type)
@@ -240,12 +266,12 @@ public partial class Player : CompositeDrawable
         {
             for (int col = 0; col < 7; col++)
             {
-                // set the bottom row to blue for debug purposes
-                board[row, col] = TileType.Blue;
+                board[row, col] = TileType.Empty;
             }
         }
     }
 
+    // TODO: fix, this crashes the game
     private void processGravity()
     {
         // start at second to bottom row
@@ -266,6 +292,33 @@ public partial class Player : CompositeDrawable
                 }
             }
         }
+    }
+
+    public void HardDrop()
+    {
+        // drop origin first if lower
+        // they are flipped and i have no idea why but it works so..
+        if (yOrigin <= yOrbit)
+        {
+            board[getLowestEmptyCell(xOrbit), xOrbit] = fallingBlockOrbit;
+            board[getLowestEmptyCell(xOrigin), xOrigin] = fallingBlockOrigin;
+        }
+        else
+        {
+            board[getLowestEmptyCell(xOrigin), xOrigin] = fallingBlockOrigin;
+            board[getLowestEmptyCell(xOrbit), xOrbit] = fallingBlockOrbit;
+        }
+    }
+
+    private int getLowestEmptyCell(int col)
+    {
+        for (int row = Const.ROWS - 1; row >= 0; row--)
+        {
+            if (board[row, col] == TileType.Empty)
+                return row;
+        }
+
+        return -1;
     }
 
     public void MoveLeftInputDown()
@@ -306,14 +359,38 @@ public partial class Player : CompositeDrawable
 
     private void moveLeft()
     {
+        if (xOrigin - 1 < 0 || xOrbit - 1 < 0)
+            return;
+
         xOrigin -= 1;
         xOrbit -= 1;
     }
 
+    private void moveLeftFully()
+    {
+        while (xOrigin - 1 >= 0 && xOrbit - 1 >= 0)
+        {
+            xOrigin -= 1;
+            xOrbit -= 1;
+        }
+    }
+
     private void moveRight()
     {
+        if (xOrigin + 1 > Const.COLS - 1 || xOrbit + 1 > Const.COLS - 1)
+            return;
+
         xOrigin += 1;
         xOrbit += 1;
+    }
+
+    private void moveRightFully()
+    {
+        while (xOrigin + 1 <= Const.COLS - 1 && xOrbit + 1 <= Const.COLS - 1)
+        {
+            xOrigin += 1;
+            xOrbit += 1;
+        }
     }
 
     // TODO: properly implement rotation
