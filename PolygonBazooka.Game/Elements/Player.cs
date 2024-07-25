@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Animations;
@@ -83,6 +84,7 @@ public partial class Player : CompositeDrawable
     private TextureAnimation yellowShadowAnimation;
     private TextureAnimation bonusTileAnimation;
     private TextureAnimation bonusShadowAnimation;
+    private TextureAnimation garbageTileAnimation;
 
     public void SetFallingBlock(TileType origin, TileType orbit)
     {
@@ -132,6 +134,9 @@ public partial class Player : CompositeDrawable
         bonusShadowAnimation = new TextureAnimation { Origin = Anchor.TopLeft, Anchor = Anchor.Centre };
         bonusShadowAnimation.AddFrame(textures.Get("bonus_shadow"));
 
+        garbageTileAnimation = new TextureAnimation { Origin = Anchor.TopLeft, Anchor = Anchor.Centre };
+        garbageTileAnimation.AddFrame(textures.Get("garbage"));
+
         // render the board at the bottom layer
         AddInternal(boardAnimation);
     }
@@ -174,13 +179,64 @@ public partial class Player : CompositeDrawable
             lastRightAutoRepeat = DateTimeOffset.Now.ToUnixTimeMilliseconds();
         }
 
-        // TODO: implement clearing
-
-        // processGravity();
+        clear();
+        processGravity();
 
         renderTiles();
 
         oldBoard = board.Clone() as TileType[,];
+    }
+
+    // TODO: this currently does not consider bonus or garbage. it should be implemented
+    private void clear()
+    {
+        List<Vector2> clearedTiles = new List<Vector2>();
+
+        // clear horizontally
+        for (int row = 0; row < Const.ROWS; row++)
+        {
+            for (int col = 0; col < Const.COLS; col++)
+            {
+                if (board[row, col] == TileType.Empty)
+                    continue;
+
+                if (col + 2 < Const.COLS)
+                {
+                    if (board[row, col] == board[row, col + 1] && board[row, col] == board[row, col + 2])
+                    {
+                        clearedTiles.Add(new Vector2(col, row));
+                        clearedTiles.Add(new Vector2(col + 1, row));
+                        clearedTiles.Add(new Vector2(col + 2, row));
+                    }
+                }
+            }
+        }
+
+        // clear vertically
+        for (int col = 0; col < Const.COLS; col++)
+        {
+            for (int row = 0; row < Const.ROWS; row++)
+            {
+                if (board[row, col] == TileType.Empty)
+                    continue;
+
+                if (row + 2 < Const.ROWS)
+                {
+                    if (board[row, col] == board[row + 1, col] && board[row, col] == board[row + 2, col])
+                    {
+                        clearedTiles.Add(new Vector2(col, row));
+                        clearedTiles.Add(new Vector2(col, row + 1));
+                        clearedTiles.Add(new Vector2(col, row + 2));
+                    }
+                }
+            }
+        }
+
+        // clear tiles
+        foreach (Vector2 tile in clearedTiles)
+        {
+            board[(int)tile.Y, (int)tile.X] = TileType.Empty;
+        }
     }
 
     private Sprite createTileSprite(int row, int col, TileType type, bool shadow = false, bool queue = false, int offset = 0)
@@ -199,11 +255,20 @@ public partial class Player : CompositeDrawable
         {
             for (int col = 0; col < Const.COLS; col++)
             {
-                if (board[row, col] == TileType.Empty)
-                    continue;
-
                 if (board[row, col] == oldBoard[row, col])
                     continue;
+
+                if (board[row, col] == TileType.Empty)
+                {
+                    if (renderedTiles[row, col] != null)
+                    {
+                        RemoveInternal(renderedTiles[row, col], false);
+                        renderedTiles[row, col].Dispose();
+                        renderedTiles[row, col] = null;
+                    }
+
+                    continue;
+                }
 
                 if (renderedTiles[row, col] != null)
                     renderedTiles[row, col].Dispose();
@@ -217,6 +282,7 @@ public partial class Player : CompositeDrawable
         // render falling block tiles and shadow
         if (fallingBlockOrigin != TileType.Empty && fallingBlockOrbit != TileType.Empty)
         {
+            // tiles
             Sprite origin = createTileSprite(yOrigin, xOrigin, fallingBlockOrigin);
             Sprite oldOrigin = renderedFallingTiles[0];
             if (oldOrigin != null)
@@ -231,14 +297,23 @@ public partial class Player : CompositeDrawable
             renderedFallingTiles[1] = orbit;
             AddInternal(orbit);
 
-            Sprite originShadow = createTileSprite(getLowestEmptyCell(xOrigin), xOrigin, fallingBlockOrigin, true);
+            // shadows
+            int originShadowYOffset = 0;
+            int orbitShadowYOffset = 0;
+
+            if (yOrigin < yOrbit)
+                originShadowYOffset = -1;
+            else if (yOrigin > yOrbit)
+                orbitShadowYOffset = -1;
+
+            Sprite originShadow = createTileSprite(getLowestEmptyCell(xOrigin) + originShadowYOffset, xOrigin, fallingBlockOrigin, true);
             Sprite oldOriginShadow = renderedShadowTiles[0];
             if (oldOriginShadow != null)
                 RemoveInternal(oldOriginShadow, false);
             renderedShadowTiles[0] = originShadow;
             AddInternal(originShadow);
 
-            Sprite orbitShadow = createTileSprite(getLowestEmptyCell(xOrbit), xOrbit, fallingBlockOrbit, true);
+            Sprite orbitShadow = createTileSprite(getLowestEmptyCell(xOrbit) + orbitShadowYOffset, xOrbit, fallingBlockOrbit, true);
             Sprite oldOrbitShadow = renderedShadowTiles[1];
             if (oldOrbitShadow != null)
                 RemoveInternal(oldOrbitShadow, false);
@@ -279,6 +354,7 @@ public partial class Player : CompositeDrawable
             TileType.Red => redTileAnimation,
             TileType.Yellow => yellowTileAnimation,
             TileType.Bonus => bonusTileAnimation,
+            TileType.Garbage => garbageTileAnimation,
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null),
         };
     }
@@ -307,27 +383,54 @@ public partial class Player : CompositeDrawable
         }
     }
 
-    // TODO: fix, this crashes the game
+    // TODO: this still doesnt work
     private void processGravity()
     {
-        // start at second to bottom row
-        for (int row = Const.ROWS - 2; row >= 0; row--)
+        for (int col = 0; col < Const.COLS; col++)
         {
-            for (int col = 0; col < Const.COLS; col++)
+            // skip the bottom row, it cant fall
+            for (int row = Const.ROWS - 2; row >= 0; row--)
             {
-                int currentRow = row;
+                if (board[row, col] == TileType.Empty)
+                    continue;
 
-                // while the row being checked is above the bottom row and the tile below is empty
-                while (currentRow < Const.ROWS && board[currentRow + 1, col] == TileType.Empty)
-                {
-                    // move the tile down
-                    board[currentRow + 1, col] = board[currentRow, col];
-                    board[currentRow, col] = TileType.Empty;
-                    // check the row below
-                    currentRow++;
-                }
+                if (row + 1 >= Const.ROWS)
+                    continue;
+
+                int lowestEmptyCell = row;
+                while (board[lowestEmptyCell + 1, col] == TileType.Empty)
+                    lowestEmptyCell++;
+
+                board[lowestEmptyCell, col] = board[row, col];
+                board[row, col] = TileType.Empty;
             }
         }
+
+        // skip the lowest row, it cant fall
+        // for (int row = Const.ROWS - 2; row >= 0; row--)
+        // {
+        //     for (int col = 0; col < Const.COLS; col++)
+        //     {
+        //         if (board[row, col] == TileType.Empty)
+        //             continue;
+        //
+        //         int rowToMoveTo = row;
+        //
+        //         for (int i = row; i < Const.ROWS; i++)
+        //         {
+        //             if (board[i, col] == TileType.Empty)
+        //                 rowToMoveTo = i;
+        //             else
+        //                 break;
+        //         }
+        //
+        //         if (rowToMoveTo != row)
+        //         {
+        //             board[rowToMoveTo, col] = board[row, col];
+        //             board[row, col] = TileType.Empty;
+        //         }
+        //     }
+        // }
     }
 
     public void HardDrop()
