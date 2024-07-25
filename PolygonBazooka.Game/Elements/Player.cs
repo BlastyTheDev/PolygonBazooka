@@ -145,8 +145,6 @@ public partial class Player : CompositeDrawable
     {
         base.Update();
 
-        // TODO: implement instant ARR (0 ms)
-
         // left DAS
         if (!leftPressed)
             leftDasActive = false;
@@ -271,7 +269,10 @@ public partial class Player : CompositeDrawable
                 }
 
                 if (renderedTiles[row, col] != null)
+                {
+                    RemoveInternal(renderedTiles[row, col], false);
                     renderedTiles[row, col].Dispose();
+                }
 
                 Sprite sprite = createTileSprite(row, col, board[row, col]);
                 renderedTiles[row, col] = sprite;
@@ -383,54 +384,23 @@ public partial class Player : CompositeDrawable
         }
     }
 
-    // TODO: this still doesnt work
     private void processGravity()
     {
         for (int col = 0; col < Const.COLS; col++)
         {
-            // skip the bottom row, it cant fall
-            for (int row = Const.ROWS - 2; row >= 0; row--)
+            int bottomEmptyRow = Const.ROWS - 1;
+
+            for (int row = Const.ROWS - 1; row >= 0; row--)
             {
-                if (board[row, col] == TileType.Empty)
-                    continue;
+                if (board[row, col] != TileType.Empty)
+                    board[bottomEmptyRow--, col] = board[row, col];
+            }
 
-                if (row + 1 >= Const.ROWS)
-                    continue;
-
-                int lowestEmptyCell = row;
-                while (board[lowestEmptyCell + 1, col] == TileType.Empty)
-                    lowestEmptyCell++;
-
-                board[lowestEmptyCell, col] = board[row, col];
+            for (int row = bottomEmptyRow; row >= 0; row--)
+            {
                 board[row, col] = TileType.Empty;
             }
         }
-
-        // skip the lowest row, it cant fall
-        // for (int row = Const.ROWS - 2; row >= 0; row--)
-        // {
-        //     for (int col = 0; col < Const.COLS; col++)
-        //     {
-        //         if (board[row, col] == TileType.Empty)
-        //             continue;
-        //
-        //         int rowToMoveTo = row;
-        //
-        //         for (int i = row; i < Const.ROWS; i++)
-        //         {
-        //             if (board[i, col] == TileType.Empty)
-        //                 rowToMoveTo = i;
-        //             else
-        //                 break;
-        //         }
-        //
-        //         if (rowToMoveTo != row)
-        //         {
-        //             board[rowToMoveTo, col] = board[row, col];
-        //             board[row, col] = TileType.Empty;
-        //         }
-        //     }
-        // }
     }
 
     public void HardDrop()
@@ -590,15 +560,43 @@ public partial class Player : CompositeDrawable
         rotate(ccw);
     }
 
-    // TODO: this should just rotate 180 degrees
     public void Flip()
     {
-        if (isSideways()) (xOrigin, xOrbit) = (xOrbit, xOrigin);
-        else (yOrigin, yOrbit) = (yOrbit, yOrigin);
+        if (isSideways())
+        {
+            // orbit left of origin (to move to right)
+            if (xOrigin > xOrbit)
+            {
+                if (isCellToRightNotEmpty())
+                    moveLeft();
+                xOrbit = xOrigin + 1;
+            }
+            // orbit right of origin (to move to left)
+            else if (xOrigin < xOrbit)
+            {
+                if (isCellToLeftNotEmpty())
+                    moveRight();
+                xOrbit = xOrigin - 1;
+            }
+        }
+        else
+        {
+            // orbit above origin: needs check bottom for clear
+            if (yOrbit > yOrigin)
+            {
+                // TODO: implement checks for whether block below is occupied
+                yOrbit = yOrigin - 1;
+            }
+            // orbit below origin
+            else if (yOrbit < yOrigin)
+            {
+                yOrbit = yOrigin + 1;
+            }
+        }
     }
 
     private bool isSideways()
     {
-        return xOrigin == xOrbit;
+        return yOrigin == yOrbit;
     }
 }

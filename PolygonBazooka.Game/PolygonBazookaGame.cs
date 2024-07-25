@@ -58,6 +58,10 @@ public partial class PolygonBazookaGame : PolygonBazookaGameBase
                     player.RotateCcw();
                     return true;
 
+                case Key.Up:
+                    player.Flip();
+                    return true;
+
                 case Key.Space:
                     player.HardDrop();
                     return true;
