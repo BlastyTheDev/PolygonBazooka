@@ -16,8 +16,11 @@ public partial class Player : CompositeDrawable
 
     private readonly Sprite[,] renderedTiles;
     private readonly Sprite[] renderedFallingTiles;
-    private readonly Sprite[] renderedSahdowTiles;
+    private readonly Sprite[] renderedShadowTiles;
     private readonly Sprite[] renderedQueueTile;
+
+    private const int cw = -1;
+    private const int ccw = 1;
 
     // origin tile of the falling block
     private TileType fallingBlockOrigin { get; set; }
@@ -40,7 +43,7 @@ public partial class Player : CompositeDrawable
     private TileType nextNextBlockOrbit { get; set; } = TileType.Red;
 
     // control handling things in ms
-    public float DelayedAutoShift = 100;
+    public float DelayedAutoShift = 200;
     public float AutoRepeatRate = 0;
 
     private bool leftPressed;
@@ -60,7 +63,7 @@ public partial class Player : CompositeDrawable
         oldBoard = board.Clone() as TileType[,];
         renderedTiles = new Sprite[Const.ROWS, Const.COLS];
         renderedFallingTiles = new Sprite[2];
-        renderedSahdowTiles = new Sprite[2];
+        renderedShadowTiles = new Sprite[2];
         renderedQueueTile = new Sprite[4];
         resetBoard();
         SetFallingBlock(TileType.Yellow, TileType.Green);
@@ -71,10 +74,15 @@ public partial class Player : CompositeDrawable
 
     private TextureAnimation boardAnimation;
     private TextureAnimation blueTileAnimation;
+    private TextureAnimation blueShadowAnimation;
     private TextureAnimation greenTileAnimation;
+    private TextureAnimation greenShadowAnimation;
     private TextureAnimation redTileAnimation;
+    private TextureAnimation redShadowAnimation;
     private TextureAnimation yellowTileAnimation;
+    private TextureAnimation yellowShadowAnimation;
     private TextureAnimation bonusTileAnimation;
+    private TextureAnimation bonusShadowAnimation;
 
     public void SetFallingBlock(TileType origin, TileType orbit)
     {
@@ -97,17 +105,32 @@ public partial class Player : CompositeDrawable
         blueTileAnimation = new TextureAnimation { Origin = Anchor.TopLeft, Anchor = Anchor.Centre, };
         blueTileAnimation.AddFrame(textures.Get("blue"));
 
+        blueShadowAnimation = new TextureAnimation { Origin = Anchor.TopLeft, Anchor = Anchor.Centre };
+        blueShadowAnimation.AddFrame(textures.Get("blue_shadow"));
+
         greenTileAnimation = new TextureAnimation { Origin = Anchor.TopLeft, Anchor = Anchor.Centre, };
         greenTileAnimation.AddFrame(textures.Get("green"));
+
+        greenShadowAnimation = new TextureAnimation { Origin = Anchor.TopLeft, Anchor = Anchor.Centre };
+        greenShadowAnimation.AddFrame(textures.Get("green_shadow"));
 
         redTileAnimation = new TextureAnimation { Origin = Anchor.TopLeft, Anchor = Anchor.Centre, };
         redTileAnimation.AddFrame(textures.Get("red"));
 
+        redShadowAnimation = new TextureAnimation { Origin = Anchor.TopLeft, Anchor = Anchor.Centre };
+        redShadowAnimation.AddFrame(textures.Get("red_shadow"));
+
         yellowTileAnimation = new TextureAnimation { Origin = Anchor.TopLeft, Anchor = Anchor.Centre, };
         yellowTileAnimation.AddFrame(textures.Get("yellow"));
 
+        yellowShadowAnimation = new TextureAnimation { Origin = Anchor.TopLeft, Anchor = Anchor.Centre };
+        yellowShadowAnimation.AddFrame(textures.Get("yellow_shadow"));
+
         bonusTileAnimation = new TextureAnimation { Origin = Anchor.TopLeft, Anchor = Anchor.Centre, };
         bonusTileAnimation.AddFrame(textures.Get("bonus"));
+
+        bonusShadowAnimation = new TextureAnimation { Origin = Anchor.TopLeft, Anchor = Anchor.Centre };
+        bonusShadowAnimation.AddFrame(textures.Get("bonus_shadow"));
 
         // render the board at the bottom layer
         AddInternal(boardAnimation);
@@ -160,11 +183,11 @@ public partial class Player : CompositeDrawable
         oldBoard = board.Clone() as TileType[,];
     }
 
-    private Sprite createTileSprite(int row, int col, TileType type, bool queue = false, int offset = 0)
+    private Sprite createTileSprite(int row, int col, TileType type, bool shadow = false, bool queue = false, int offset = 0)
     {
         return new Sprite
         {
-            Texture = getTileAnimation(type).CurrentFrame,
+            Texture = shadow ? getShadowAnimation(type).CurrentFrame : getTileAnimation(type).CurrentFrame,
             Position = queue ? new Vector2(4 + 8 * 7, offset) : new Vector2(2 + col * 8, 2 + row * 8)
         };
     }
@@ -208,19 +231,19 @@ public partial class Player : CompositeDrawable
             renderedFallingTiles[1] = orbit;
             AddInternal(orbit);
 
-            // Sprite originShadow = createTileSprite(yOrigin, xOrigin, fallingBlockOrigin);
-            // Sprite oldOriginShadow = renderedFallingTiles[0];
-            // if (oldOriginShadow != null)
-            //     RemoveInternal(oldOriginShadow, false);
-            // renderedFallingTiles[0] = originShadow;
-            // AddInternal(originShadow);
-            //
-            // Sprite orbitShadow = createTileSprite(yOrbit, xOrbit, fallingBlockOrbit);
-            // Sprite oldOrbitShadow = renderedFallingTiles[1];
-            // if (oldOrbitShadow != null)
-            //     RemoveInternal(oldOrbitShadow, false);
-            // renderedFallingTiles[1] = orbitShadow;
-            // AddInternal(orbitShadow);
+            Sprite originShadow = createTileSprite(getLowestEmptyCell(xOrigin), xOrigin, fallingBlockOrigin, true);
+            Sprite oldOriginShadow = renderedShadowTiles[0];
+            if (oldOriginShadow != null)
+                RemoveInternal(oldOriginShadow, false);
+            renderedShadowTiles[0] = originShadow;
+            AddInternal(originShadow);
+
+            Sprite orbitShadow = createTileSprite(getLowestEmptyCell(xOrbit), xOrbit, fallingBlockOrbit, true);
+            Sprite oldOrbitShadow = renderedShadowTiles[1];
+            if (oldOrbitShadow != null)
+                RemoveInternal(oldOrbitShadow, false);
+            renderedShadowTiles[1] = orbitShadow;
+            AddInternal(orbitShadow);
         }
 
         // render next in queue
@@ -239,7 +262,7 @@ public partial class Player : CompositeDrawable
 
     private void renderQueueTile(TileType type, int offset, int renderedIndex)
     {
-        Sprite sprite = createTileSprite(0, 0, type, true, offset);
+        Sprite sprite = createTileSprite(0, 0, type, false, true, offset);
         Sprite oldSprite = renderedQueueTile[renderedIndex];
         if (oldSprite != null)
             RemoveInternal(oldSprite, false);
@@ -256,6 +279,19 @@ public partial class Player : CompositeDrawable
             TileType.Red => redTileAnimation,
             TileType.Yellow => yellowTileAnimation,
             TileType.Bonus => bonusTileAnimation,
+            _ => throw new ArgumentOutOfRangeException(nameof(type), type, null),
+        };
+    }
+
+    private TextureAnimation getShadowAnimation(TileType type)
+    {
+        return type switch
+        {
+            TileType.Blue => blueShadowAnimation,
+            TileType.Green => greenShadowAnimation,
+            TileType.Red => redShadowAnimation,
+            TileType.Yellow => yellowShadowAnimation,
+            TileType.Bonus => bonusShadowAnimation,
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null),
         };
     }
@@ -393,23 +429,65 @@ public partial class Player : CompositeDrawable
         }
     }
 
-    // TODO: properly implement rotation
+    private bool isCellToLeftNotEmpty()
+    {
+        int lowestEmptyCell = getLowestEmptyCell(xOrigin);
+        return xOrigin <= 0 || lowestEmptyCell == -1 || board[lowestEmptyCell, xOrigin - 1] != TileType.Empty;
+    }
+
+    private bool isCellToRightNotEmpty()
+    {
+        int lowestEmptyCell = getLowestEmptyCell(xOrigin);
+        return xOrigin >= Const.COLS - 1 || lowestEmptyCell == -1 || board[lowestEmptyCell, xOrigin + 1] != TileType.Empty;
+    }
+
+    private void rotate(int dir)
+    {
+        // origin above orbit
+        if (yOrigin > yOrbit)
+        {
+            if (isCellToLeftNotEmpty() && dir == ccw)
+                moveRight();
+            if (isCellToRightNotEmpty() && dir == cw)
+                moveLeft();
+            xOrbit = xOrigin - dir;
+            yOrbit = yOrigin;
+        }
+        // origin below orbit
+        else if (yOrigin < yOrbit)
+        {
+            if (isCellToLeftNotEmpty() && dir == cw)
+                moveRight();
+            if (isCellToRightNotEmpty() && dir == ccw)
+                moveLeft();
+            xOrbit = xOrigin + dir;
+            yOrbit = yOrigin;
+        }
+        // origin left of orbit
+        else if (xOrigin < xOrbit)
+        {
+            xOrbit = xOrigin;
+            yOrbit = yOrigin - dir;
+        }
+        // origin right of orbit
+        else if (xOrigin > xOrbit)
+        {
+            xOrbit = xOrigin;
+            yOrbit = yOrigin + dir;
+        }
+    }
+
     public void RotateCw()
     {
-        if (xOrbit + 1 > Const.COLS - 1)
-            moveLeft();
-        xOrigin = xOrbit + 1;
-        yOrigin = yOrbit;
+        rotate(cw);
     }
 
     public void RotateCcw()
     {
-        if (xOrbit - 1 < 0)
-            moveRight();
-        xOrigin = xOrbit - 1;
-        yOrigin = yOrbit;
+        rotate(ccw);
     }
 
+    // TODO: this should just rotate 180 degrees
     public void Flip()
     {
         if (isSideways()) (xOrigin, xOrbit) = (xOrbit, xOrigin);

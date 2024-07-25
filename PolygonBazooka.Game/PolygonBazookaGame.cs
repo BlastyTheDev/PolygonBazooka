@@ -42,16 +42,20 @@ public partial class PolygonBazookaGame : PolygonBazookaGameBase
         {
             switch (e.Key)
             {
-                case Key.Left:
+                case Key.A:
                     player.MoveLeftInputDown();
                     return true;
 
-                case Key.Right:
+                case Key.D:
                     player.MoveRightInputDown();
                     return true;
 
-                case Key.Up:
+                case Key.Right:
                     player.RotateCw();
+                    return true;
+
+                case Key.Left:
+                    player.RotateCcw();
                     return true;
 
                 case Key.Space:
@@ -69,11 +73,11 @@ public partial class PolygonBazookaGame : PolygonBazookaGameBase
         {
             switch (e.Key)
             {
-                case Key.Left:
+                case Key.A:
                     player.MoveLeftInputUp();
                     break;
 
-                case Key.Right:
+                case Key.D:
                     player.MoveRightInputUp();
                     break;
             }
