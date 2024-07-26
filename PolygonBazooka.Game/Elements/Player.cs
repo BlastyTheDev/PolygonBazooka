@@ -180,7 +180,6 @@ public partial class Player : CompositeDrawable
         clear();
         processGravity();
 
-        Console.WriteLine("update");
         renderTiles();
 
         oldBoard = board.Clone() as TileType[,];
@@ -194,38 +193,20 @@ public partial class Player : CompositeDrawable
         // clear horizontally
         for (int row = 0; row < Const.ROWS; row++)
         {
-            for (int col = 0; col < Const.COLS - 2; col++)
+            for (int col = 0; col < Const.COLS; col++)
             {
-                if (board[row, col] == TileType.Empty || board[row, col] == TileType.Garbage || board[row, col] == TileType.Bonus)
+                if (board[row, col] == TileType.Empty)
                     continue;
 
-                int endOfRow = col;
-
-                for (int nextCol = col; nextCol < Const.COLS; nextCol++)
+                if (col + 2 < Const.COLS)
                 {
-                    Console.WriteLine($"Checking row {row}, col {nextCol}");
-                    TileType next = board[row, nextCol];
-                    if (next == board[row, col])
-                        endOfRow = nextCol;
-                    else if (next != TileType.Garbage && next != TileType.Bonus)
-                        break;
+                    if (board[row, col] == board[row, col + 1] && board[row, col] == board[row, col + 2])
+                    {
+                        clearedTiles.Add(new Vector2(col, row));
+                        clearedTiles.Add(new Vector2(col + 1, row));
+                        clearedTiles.Add(new Vector2(col + 2, row));
+                    }
                 }
-
-                if (endOfRow - col >= 2)
-                {
-                    for (int i = col; i < endOfRow + 1; i++)
-                        clearedTiles.Add(new Vector2(i, row));
-                }
-
-                // if (col + 2 < Const.COLS)
-                // {
-                //     if (board[row, col] == board[row, col + 1] && board[row, col] == board[row, col + 2])
-                //     {
-                //         clearedTiles.Add(new Vector2(col, row));
-                //         clearedTiles.Add(new Vector2(col + 1, row));
-                //         clearedTiles.Add(new Vector2(col + 2, row));
-                //     }
-                // }
             }
         }
 
@@ -275,27 +256,23 @@ public partial class Player : CompositeDrawable
                 if (board[row, col] == oldBoard[row, col])
                     continue;
 
-                // if (board[row, col] == TileType.Empty)
-                // {
-                //     if (renderedTiles[row, col] != null)
-                //     {
-                //         RemoveInternal(renderedTiles[row, col], true);
-                //         renderedTiles[row, col] = null;
-                //     }
-                //
-                //     continue;
-                // }
+                if (board[row, col] == TileType.Empty)
+                {
+                    if (renderedTiles[row, col] != null)
+                    {
+                        RemoveInternal(renderedTiles[row, col], false);
+                        renderedTiles[row, col].Dispose();
+                        renderedTiles[row, col] = null;
+                    }
 
-                Console.WriteLine("render");
+                    continue;
+                }
 
                 if (renderedTiles[row, col] != null)
                 {
-                    RemoveInternal(renderedTiles[row, col], true);
-                    renderedTiles[row, col] = null;
+                    RemoveInternal(renderedTiles[row, col], false);
+                    renderedTiles[row, col].Dispose();
                 }
-
-                if (board[row, col] == TileType.Empty)
-                    continue;
 
                 Sprite sprite = createTileSprite(row, col, board[row, col]);
                 renderedTiles[row, col] = sprite;
@@ -310,14 +287,14 @@ public partial class Player : CompositeDrawable
             Sprite origin = createTileSprite(yOrigin, xOrigin, fallingBlockOrigin);
             Sprite oldOrigin = renderedFallingTiles[0];
             if (oldOrigin != null)
-                RemoveInternal(oldOrigin, true);
+                RemoveInternal(oldOrigin, false);
             renderedFallingTiles[0] = origin;
             AddInternal(origin);
 
             Sprite orbit = createTileSprite(yOrbit, xOrbit, fallingBlockOrbit);
             Sprite oldOrbit = renderedFallingTiles[1];
             if (oldOrbit != null)
-                RemoveInternal(oldOrbit, true);
+                RemoveInternal(oldOrbit, false);
             renderedFallingTiles[1] = orbit;
             AddInternal(orbit);
 
@@ -333,14 +310,14 @@ public partial class Player : CompositeDrawable
             Sprite originShadow = createTileSprite(getLowestEmptyCell(xOrigin) + originShadowYOffset, xOrigin, fallingBlockOrigin, true);
             Sprite oldOriginShadow = renderedShadowTiles[0];
             if (oldOriginShadow != null)
-                RemoveInternal(oldOriginShadow, true);
+                RemoveInternal(oldOriginShadow, false);
             renderedShadowTiles[0] = originShadow;
             AddInternal(originShadow);
 
             Sprite orbitShadow = createTileSprite(getLowestEmptyCell(xOrbit) + orbitShadowYOffset, xOrbit, fallingBlockOrbit, true);
             Sprite oldOrbitShadow = renderedShadowTiles[1];
             if (oldOrbitShadow != null)
-                RemoveInternal(oldOrbitShadow, true);
+                RemoveInternal(oldOrbitShadow, false);
             renderedShadowTiles[1] = orbitShadow;
             AddInternal(orbitShadow);
         }
@@ -364,7 +341,7 @@ public partial class Player : CompositeDrawable
         Sprite sprite = createTileSprite(0, 0, type, false, true, offset);
         Sprite oldSprite = renderedQueueTile[renderedIndex];
         if (oldSprite != null)
-            RemoveInternal(oldSprite, true);
+            RemoveInternal(oldSprite, false);
         renderedQueueTile[renderedIndex] = sprite;
         AddInternal(sprite);
     }
@@ -378,6 +355,7 @@ public partial class Player : CompositeDrawable
             TileType.Red => redTileAnimation,
             TileType.Yellow => yellowTileAnimation,
             TileType.Bonus => bonusTileAnimation,
+            TileType.Garbage => garbageTileAnimation,
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null),
         };
     }
@@ -391,7 +369,6 @@ public partial class Player : CompositeDrawable
             TileType.Red => redShadowAnimation,
             TileType.Yellow => yellowShadowAnimation,
             TileType.Bonus => bonusShadowAnimation,
-            TileType.Garbage => bonusShadowAnimation,
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null),
         };
     }
@@ -440,23 +417,6 @@ public partial class Player : CompositeDrawable
             board[getLowestEmptyCell(xOrigin), xOrigin] = fallingBlockOrigin;
             board[getLowestEmptyCell(xOrbit), xOrbit] = fallingBlockOrbit;
         }
-
-        // change the falling block to the next in queue
-        fallingBlockOrigin = nextBlockOrigin;
-        fallingBlockOrbit = nextBlockOrbit;
-
-        nextBlockOrigin = nextNextBlockOrigin;
-        nextBlockOrbit = nextNextBlockOrbit;
-
-        nextNextBlockOrigin = getRandomTileType();
-        nextNextBlockOrbit = getRandomTileType();
-    }
-
-    private TileType getRandomTileType()
-    {
-        Random random = new Random();
-        TileType[] types = (TileType[])Enum.GetValues(typeof(TileType));
-        return types[random.Next(0, 6)];
     }
 
     private int getLowestEmptyCell(int col)
