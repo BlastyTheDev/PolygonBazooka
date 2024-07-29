@@ -6,6 +6,7 @@ using osu.Framework.Graphics.Animations;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.Textures;
+using osu.Framework.Utils;
 using osuTK;
 
 namespace PolygonBazooka.Game.Elements;
@@ -47,6 +48,8 @@ public partial class Player : CompositeDrawable
     public float DelayedAutoShift = 200;
     public float AutoRepeatRate = 0;
 
+    public float SoftDropRate = 100;
+
     private bool leftPressed;
     private long leftPressStart;
     private bool rightPressed;
@@ -57,6 +60,7 @@ public partial class Player : CompositeDrawable
     private long lastLeftAutoRepeat;
     private bool rightDasActive;
     private long lastRightAutoRepeat;
+    private long lastDownAutoRepeat;
 
     public Player()
     {
@@ -177,6 +181,25 @@ public partial class Player : CompositeDrawable
             lastRightAutoRepeat = DateTimeOffset.Now.ToUnixTimeMilliseconds();
         }
 
+        if (downPressed)
+        {
+            if (DateTimeOffset.Now.ToUnixTimeMilliseconds() - lastDownAutoRepeat >= SoftDropRate)
+            {
+                lastDownAutoRepeat = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+
+                int originLowestEmptyCell = getLowestEmptyCell(xOrigin);
+                int orbitLowestEmptyCell = getLowestEmptyCell(xOrbit);
+
+                if (yOrigin < yOrbit && !isSideways()) originLowestEmptyCell--;
+                if (yOrbit < yOrigin && !isSideways()) orbitLowestEmptyCell--;
+
+                if (yOrigin < originLowestEmptyCell)
+                    yOrigin += 1;
+                if (yOrbit < orbitLowestEmptyCell)
+                    yOrbit += 1;
+            }
+        }
+
         clear();
         processGravity();
 
@@ -283,21 +306,6 @@ public partial class Player : CompositeDrawable
         // render falling block tiles and shadow
         if (fallingBlockOrigin != TileType.Empty && fallingBlockOrbit != TileType.Empty)
         {
-            // tiles
-            Sprite origin = createTileSprite(yOrigin, xOrigin, fallingBlockOrigin);
-            Sprite oldOrigin = renderedFallingTiles[0];
-            if (oldOrigin != null)
-                RemoveInternal(oldOrigin, false);
-            renderedFallingTiles[0] = origin;
-            AddInternal(origin);
-
-            Sprite orbit = createTileSprite(yOrbit, xOrbit, fallingBlockOrbit);
-            Sprite oldOrbit = renderedFallingTiles[1];
-            if (oldOrbit != null)
-                RemoveInternal(oldOrbit, false);
-            renderedFallingTiles[1] = orbit;
-            AddInternal(orbit);
-
             // shadows
             int originShadowYOffset = 0;
             int orbitShadowYOffset = 0;
@@ -320,6 +328,21 @@ public partial class Player : CompositeDrawable
                 RemoveInternal(oldOrbitShadow, false);
             renderedShadowTiles[1] = orbitShadow;
             AddInternal(orbitShadow);
+
+            // tiles
+            Sprite origin = createTileSprite(yOrigin, xOrigin, fallingBlockOrigin);
+            Sprite oldOrigin = renderedFallingTiles[0];
+            if (oldOrigin != null)
+                RemoveInternal(oldOrigin, false);
+            renderedFallingTiles[0] = origin;
+            AddInternal(origin);
+
+            Sprite orbit = createTileSprite(yOrbit, xOrbit, fallingBlockOrbit);
+            Sprite oldOrbit = renderedFallingTiles[1];
+            if (oldOrbit != null)
+                RemoveInternal(oldOrbit, false);
+            renderedFallingTiles[1] = orbit;
+            AddInternal(orbit);
         }
 
         // render next in queue
@@ -417,6 +440,20 @@ public partial class Player : CompositeDrawable
             board[getLowestEmptyCell(xOrigin), xOrigin] = fallingBlockOrigin;
             board[getLowestEmptyCell(xOrbit), xOrbit] = fallingBlockOrbit;
         }
+
+        fallingBlockOrigin = nextBlockOrigin;
+        fallingBlockOrbit = nextBlockOrbit;
+
+        xOrigin = 3;
+        yOrigin = -2;
+        xOrbit = 3;
+        yOrbit = -3;
+
+        nextBlockOrigin = nextNextBlockOrigin;
+        nextBlockOrbit = nextNextBlockOrbit;
+
+        nextNextBlockOrigin = Const.QUEUE_TILE_TYPES[RNG.Next(0, Const.QUEUE_TILE_TYPES.Length - 1)];
+        nextNextBlockOrbit = Const.QUEUE_TILE_TYPES[RNG.Next(0, Const.QUEUE_TILE_TYPES.Length - 1)];
     }
 
     private int getLowestEmptyCell(int col)
@@ -428,6 +465,11 @@ public partial class Player : CompositeDrawable
         }
 
         return -1;
+    }
+
+    public void SoftDrop(bool pressed)
+    {
+        downPressed = pressed;
     }
 
     public void MoveLeftInputDown()

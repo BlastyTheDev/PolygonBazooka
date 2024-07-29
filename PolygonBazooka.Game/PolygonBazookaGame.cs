@@ -50,6 +50,10 @@ public partial class PolygonBazookaGame : PolygonBazookaGameBase
                     player.MoveRightInputDown();
                     return true;
 
+                case Key.S:
+                    player.SoftDrop(true);
+                    return true;
+
                 case Key.Right:
                     player.RotateCw();
                     return true;
@@ -83,6 +87,10 @@ public partial class PolygonBazookaGame : PolygonBazookaGameBase
 
                 case Key.D:
                     player.MoveRightInputUp();
+                    break;
+
+                case Key.S:
+                    player.SoftDrop(false);
                     break;
             }
         }
