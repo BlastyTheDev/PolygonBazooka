@@ -45,7 +45,7 @@ public partial class Player : CompositeDrawable
     private TileType nextNextBlockOrbit { get; set; } = TileType.Red;
 
     // control handling things in ms
-    public float DelayedAutoShift = 200;
+    public float DelayedAutoShift = 127;
     public float AutoRepeatRate = 0;
 
     public float SoftDropRate = 100;
@@ -53,7 +53,10 @@ public partial class Player : CompositeDrawable
     private bool leftPressed;
     private long leftPressStart;
     private bool rightPressed;
+
     private long rightPressStart;
+
+    // soft dropping is kinda pointless in this kind of game
     private bool downPressed;
 
     private bool leftDasActive;
@@ -61,6 +64,10 @@ public partial class Player : CompositeDrawable
     private bool rightDasActive;
     private long lastRightAutoRepeat;
     private long lastDownAutoRepeat;
+
+    // falling block gravity
+    public float GravityRate = 1000;
+    private long lastFallingGravityMovement;
 
     public Player()
     {
@@ -181,6 +188,24 @@ public partial class Player : CompositeDrawable
             lastRightAutoRepeat = DateTimeOffset.Now.ToUnixTimeMilliseconds();
         }
 
+        // TODO: make falling blocks lock when they are at the lowest point they can be
+        if (DateTimeOffset.Now.ToUnixTimeMilliseconds() - lastFallingGravityMovement >= GravityRate)
+        {
+            lastFallingGravityMovement = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+
+            int originLowestEmptyCell = getLowestEmptyCell(xOrigin);
+            int orbitLowestEmptyCell = getLowestEmptyCell(xOrbit);
+
+            if (yOrigin < yOrbit && !isSideways()) originLowestEmptyCell--;
+            if (yOrbit < yOrigin && !isSideways()) orbitLowestEmptyCell--;
+
+            if (yOrigin < originLowestEmptyCell)
+                yOrigin += 1;
+            if (yOrbit < orbitLowestEmptyCell)
+                yOrbit += 1;
+        }
+
+        // useless
         if (downPressed)
         {
             if (DateTimeOffset.Now.ToUnixTimeMilliseconds() - lastDownAutoRepeat >= SoftDropRate)
@@ -208,7 +233,6 @@ public partial class Player : CompositeDrawable
         oldBoard = board.Clone() as TileType[,];
     }
 
-    // TODO: this currently does not consider bonus or garbage. it should be implemented
     private void clear()
     {
         List<Vector2> clearedTiles = new List<Vector2>();
@@ -218,18 +242,39 @@ public partial class Player : CompositeDrawable
         {
             for (int col = 0; col < Const.COLS; col++)
             {
-                if (board[row, col] == TileType.Empty)
+                if (board[row, col] == TileType.Empty || board[row, col] == TileType.Bonus || board[row, col] == TileType.Garbage)
                     continue;
 
-                if (col + 2 < Const.COLS)
+                int matchLength = 1;
+                TileType current = board[row, col];
+
+                for (int nextCol = col + 1; nextCol < Const.COLS; nextCol++)
                 {
-                    if (board[row, col] == board[row, col + 1] && board[row, col] == board[row, col + 2])
-                    {
-                        clearedTiles.Add(new Vector2(col, row));
-                        clearedTiles.Add(new Vector2(col + 1, row));
-                        clearedTiles.Add(new Vector2(col + 2, row));
-                    }
+                    if (board[row, nextCol] == current || board[row, nextCol] == TileType.Bonus)
+                        matchLength++;
+                    else
+                        break;
                 }
+
+                if (board[row, col + matchLength - 1] == TileType.Bonus)
+                    matchLength--;
+
+                if (matchLength >= 3 && board[row, col + matchLength - 1] == current)
+                {
+                    for (int i = 0; i < matchLength; i++)
+                        clearedTiles.Add(new Vector2(col + i, row));
+                }
+
+                // if (col + 2 < Const.COLS)
+                // {
+                //     if ((board[row, col] == board[row, col + 1] && board[row, col] == board[row, col + 2]) ||
+                //         (board[row, col] == board[row, col + 2] && board[row, col + 1] == TileType.Bonus))
+                //     {
+                //         clearedTiles.Add(new Vector2(col, row));
+                //         clearedTiles.Add(new Vector2(col + 1, row));
+                //         clearedTiles.Add(new Vector2(col + 2, row));
+                //     }
+                // }
             }
         }
 
@@ -238,25 +283,58 @@ public partial class Player : CompositeDrawable
         {
             for (int row = 0; row < Const.ROWS; row++)
             {
-                if (board[row, col] == TileType.Empty)
+                if (board[row, col] == TileType.Empty || board[row, col] == TileType.Bonus || board[row, col] == TileType.Garbage)
                     continue;
 
-                if (row + 2 < Const.ROWS)
+                int matchLength = 1;
+                TileType current = board[row, col];
+
+                for (int nextRow = row + 1; nextRow < Const.ROWS; nextRow++)
                 {
-                    if (board[row, col] == board[row + 1, col] && board[row, col] == board[row + 2, col])
-                    {
-                        clearedTiles.Add(new Vector2(col, row));
-                        clearedTiles.Add(new Vector2(col, row + 1));
-                        clearedTiles.Add(new Vector2(col, row + 2));
-                    }
+                    if (board[nextRow, col] == current || board[nextRow, col] == TileType.Bonus)
+                        matchLength++;
+                    else
+                        break;
                 }
+
+                if (board[row + matchLength - 1, col] == TileType.Bonus)
+                    matchLength--;
+
+                if (matchLength >= 3 && board[row + matchLength - 1, col] == current)
+                {
+                    for (int i = 0; i < matchLength; i++)
+                        clearedTiles.Add(new Vector2(col, row + i));
+                }
+
+                // if (row + 2 < Const.ROWS)
+                // {
+                //     if ((board[row, col] == board[row + 1, col] && board[row, col] == board[row + 2, col]) ||
+                //         (board[row, col] == board[row + 2, col] && board[row + 1, col] == TileType.Bonus))
+                //     {
+                //         clearedTiles.Add(new Vector2(col, row));
+                //         clearedTiles.Add(new Vector2(col, row + 1));
+                //         clearedTiles.Add(new Vector2(col, row + 2));
+                //     }
+                // }
             }
         }
 
-        // clear tiles
+        // clear tiles and adjacent garbage
         foreach (Vector2 tile in clearedTiles)
         {
             board[(int)tile.Y, (int)tile.X] = TileType.Empty;
+            // if tile below is garbage
+            if ((int)tile.Y - 1 >= 0 && board[(int)tile.Y - 1, (int)tile.X] == TileType.Garbage)
+                board[(int)tile.Y - 1, (int)tile.X] = TileType.Empty;
+            // if tile above is garbage
+            if ((int)tile.Y + 1 < Const.ROWS && board[(int)tile.Y + 1, (int)tile.X] == TileType.Garbage)
+                board[(int)tile.Y + 1, (int)tile.X] = TileType.Empty;
+            // if tile to the left is garbage
+            if ((int)tile.X - 1 >= 0 && board[(int)tile.Y, (int)tile.X - 1] == TileType.Garbage)
+                board[(int)tile.Y, (int)tile.X - 1] = TileType.Empty;
+            // if tile to the right is garbage
+            if ((int)tile.X + 1 < Const.COLS && board[(int)tile.Y, (int)tile.X + 1] == TileType.Garbage)
+                board[(int)tile.Y, (int)tile.X + 1] = TileType.Empty;
         }
     }
 
@@ -392,6 +470,7 @@ public partial class Player : CompositeDrawable
             TileType.Red => redShadowAnimation,
             TileType.Yellow => yellowShadowAnimation,
             TileType.Bonus => bonusShadowAnimation,
+            // TileType.Garbage => bonusShadowAnimation, // temp
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null),
         };
     }
@@ -452,8 +531,8 @@ public partial class Player : CompositeDrawable
         nextBlockOrigin = nextNextBlockOrigin;
         nextBlockOrbit = nextNextBlockOrbit;
 
-        nextNextBlockOrigin = Const.QUEUE_TILE_TYPES[RNG.Next(0, Const.QUEUE_TILE_TYPES.Length - 1)];
-        nextNextBlockOrbit = Const.QUEUE_TILE_TYPES[RNG.Next(0, Const.QUEUE_TILE_TYPES.Length - 1)];
+        nextNextBlockOrigin = Const.QUEUE_TILE_TYPES[RNG.Next(0, /*Const.QUEUE_TILE_TYPES.Length - 1*/5)];
+        nextNextBlockOrbit = Const.QUEUE_TILE_TYPES[RNG.Next(0, /*Const.QUEUE_TILE_TYPES.Length - 1*/5)];
     }
 
     private int getLowestEmptyCell(int col)

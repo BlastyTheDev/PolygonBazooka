@@ -38,7 +38,7 @@ public partial class PolygonBazookaGame : PolygonBazookaGameBase
 
     protected override bool OnKeyDown(KeyDownEvent e)
     {
-        if (gameState == GameState.Playing)
+        if (gameState == GameState.Playing && !e.Repeat)
         {
             switch (e.Key)
             {
@@ -50,6 +50,7 @@ public partial class PolygonBazookaGame : PolygonBazookaGameBase
                     player.MoveRightInputDown();
                     return true;
 
+                // useless
                 case Key.S:
                     player.SoftDrop(true);
                     return true;
@@ -89,6 +90,7 @@ public partial class PolygonBazookaGame : PolygonBazookaGameBase
                     player.MoveRightInputUp();
                     break;
 
+                // useless
                 case Key.S:
                     player.SoftDrop(false);
                     break;
