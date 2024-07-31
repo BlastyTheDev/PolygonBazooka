@@ -188,7 +188,6 @@ public partial class Player : CompositeDrawable
             lastRightAutoRepeat = DateTimeOffset.Now.ToUnixTimeMilliseconds();
         }
 
-        // TODO: make falling blocks lock when they are at the lowest point they can be
         if (DateTimeOffset.Now.ToUnixTimeMilliseconds() - lastFallingGravityMovement >= GravityRate)
         {
             lastFallingGravityMovement = DateTimeOffset.Now.ToUnixTimeMilliseconds();
@@ -199,10 +198,24 @@ public partial class Player : CompositeDrawable
             if (yOrigin < yOrbit && !isSideways()) originLowestEmptyCell--;
             if (yOrbit < yOrigin && !isSideways()) orbitLowestEmptyCell--;
 
-            if (yOrigin < originLowestEmptyCell)
+            if (yOrigin < originLowestEmptyCell && fallingBlockOrigin != TileType.Empty)
                 yOrigin += 1;
-            if (yOrbit < orbitLowestEmptyCell)
+            else if (fallingBlockOrigin != TileType.Empty)
+            {
+                board[yOrigin, xOrigin] = fallingBlockOrigin;
+                fallingBlockOrigin = TileType.Empty;
+            }
+
+            if (yOrbit < orbitLowestEmptyCell && fallingBlockOrbit != TileType.Empty)
                 yOrbit += 1;
+            else if (fallingBlockOrbit != TileType.Empty)
+            {
+                board[yOrbit, xOrbit] = fallingBlockOrbit;
+                fallingBlockOrbit = TileType.Empty;
+            }
+
+            if (fallingBlockOrigin == TileType.Empty && fallingBlockOrbit == TileType.Empty)
+                nextFallingBlock();
         }
 
         // useless
@@ -382,16 +395,12 @@ public partial class Player : CompositeDrawable
         }
 
         // render falling block tiles and shadow
-        if (fallingBlockOrigin != TileType.Empty && fallingBlockOrbit != TileType.Empty)
+        if (fallingBlockOrigin != TileType.Empty)
         {
             // shadows
             int originShadowYOffset = 0;
-            int orbitShadowYOffset = 0;
-
             if (yOrigin < yOrbit)
                 originShadowYOffset = -1;
-            else if (yOrigin > yOrbit)
-                orbitShadowYOffset = -1;
 
             Sprite originShadow = createTileSprite(getLowestEmptyCell(xOrigin) + originShadowYOffset, xOrigin, fallingBlockOrigin, true);
             Sprite oldOriginShadow = renderedShadowTiles[0];
@@ -400,13 +409,6 @@ public partial class Player : CompositeDrawable
             renderedShadowTiles[0] = originShadow;
             AddInternal(originShadow);
 
-            Sprite orbitShadow = createTileSprite(getLowestEmptyCell(xOrbit) + orbitShadowYOffset, xOrbit, fallingBlockOrbit, true);
-            Sprite oldOrbitShadow = renderedShadowTiles[1];
-            if (oldOrbitShadow != null)
-                RemoveInternal(oldOrbitShadow, false);
-            renderedShadowTiles[1] = orbitShadow;
-            AddInternal(orbitShadow);
-
             // tiles
             Sprite origin = createTileSprite(yOrigin, xOrigin, fallingBlockOrigin);
             Sprite oldOrigin = renderedFallingTiles[0];
@@ -414,6 +416,32 @@ public partial class Player : CompositeDrawable
                 RemoveInternal(oldOrigin, false);
             renderedFallingTiles[0] = origin;
             AddInternal(origin);
+        }
+        else
+        {
+            Sprite fallingTile = renderedFallingTiles[0];
+            if (fallingTile != null)
+                RemoveInternal(fallingTile, true);
+            renderedFallingTiles[0] = null;
+
+            Sprite shadow = renderedShadowTiles[0];
+            if (shadow != null)
+                RemoveInternal(shadow, true);
+            renderedShadowTiles[0] = null;
+        }
+
+        if (fallingBlockOrbit != TileType.Empty)
+        {
+            int orbitShadowYOffset = 0;
+            if (yOrigin > yOrbit)
+                orbitShadowYOffset = -1;
+
+            Sprite orbitShadow = createTileSprite(getLowestEmptyCell(xOrbit) + orbitShadowYOffset, xOrbit, fallingBlockOrbit, true);
+            Sprite oldOrbitShadow = renderedShadowTiles[1];
+            if (oldOrbitShadow != null)
+                RemoveInternal(oldOrbitShadow, false);
+            renderedShadowTiles[1] = orbitShadow;
+            AddInternal(orbitShadow);
 
             Sprite orbit = createTileSprite(yOrbit, xOrbit, fallingBlockOrbit);
             Sprite oldOrbit = renderedFallingTiles[1];
@@ -421,6 +449,18 @@ public partial class Player : CompositeDrawable
                 RemoveInternal(oldOrbit, false);
             renderedFallingTiles[1] = orbit;
             AddInternal(orbit);
+        }
+        else
+        {
+            Sprite sprite = renderedFallingTiles[1];
+            if (sprite != null)
+                RemoveInternal(sprite, true);
+            renderedFallingTiles[1] = null;
+
+            Sprite shadow = renderedShadowTiles[1];
+            if (shadow != null)
+                RemoveInternal(shadow, true);
+            renderedShadowTiles[1] = null;
         }
 
         // render next in queue
@@ -511,15 +551,24 @@ public partial class Player : CompositeDrawable
         // they are flipped and i have no idea why but it works so..
         if (yOrigin <= yOrbit)
         {
-            board[getLowestEmptyCell(xOrbit), xOrbit] = fallingBlockOrbit;
-            board[getLowestEmptyCell(xOrigin), xOrigin] = fallingBlockOrigin;
+            if (fallingBlockOrbit != TileType.Empty)
+                board[getLowestEmptyCell(xOrbit), xOrbit] = fallingBlockOrbit;
+            if (fallingBlockOrigin != TileType.Empty)
+                board[getLowestEmptyCell(xOrigin), xOrigin] = fallingBlockOrigin;
         }
         else
         {
-            board[getLowestEmptyCell(xOrigin), xOrigin] = fallingBlockOrigin;
-            board[getLowestEmptyCell(xOrbit), xOrbit] = fallingBlockOrbit;
+            if (fallingBlockOrigin != TileType.Empty)
+                board[getLowestEmptyCell(xOrigin), xOrigin] = fallingBlockOrigin;
+            if (fallingBlockOrbit != TileType.Empty)
+                board[getLowestEmptyCell(xOrbit), xOrbit] = fallingBlockOrbit;
         }
 
+        nextFallingBlock();
+    }
+
+    private void nextFallingBlock()
+    {
         fallingBlockOrigin = nextBlockOrigin;
         fallingBlockOrbit = nextBlockOrbit;
 
@@ -531,8 +580,8 @@ public partial class Player : CompositeDrawable
         nextBlockOrigin = nextNextBlockOrigin;
         nextBlockOrbit = nextNextBlockOrbit;
 
-        nextNextBlockOrigin = Const.QUEUE_TILE_TYPES[RNG.Next(0, /*Const.QUEUE_TILE_TYPES.Length - 1*/5)];
-        nextNextBlockOrbit = Const.QUEUE_TILE_TYPES[RNG.Next(0, /*Const.QUEUE_TILE_TYPES.Length - 1*/5)];
+        nextNextBlockOrigin = Const.QUEUE_TILE_TYPES[RNG.Next(0, Const.QUEUE_TILE_TYPES.Length)];
+        nextNextBlockOrbit = Const.QUEUE_TILE_TYPES[RNG.Next(0, Const.QUEUE_TILE_TYPES.Length)];
     }
 
     private int getLowestEmptyCell(int col)
@@ -592,13 +641,16 @@ public partial class Player : CompositeDrawable
         if (xOrigin - 1 < 0 || xOrbit - 1 < 0)
             return;
 
+        if (isCellToLeftNotEmpty())
+            return;
+
         xOrigin -= 1;
         xOrbit -= 1;
     }
 
     private void moveLeftFully()
     {
-        while (xOrigin - 1 >= 0 && xOrbit - 1 >= 0)
+        while (xOrigin - 1 >= 0 && xOrbit - 1 >= 0 && !isCellToLeftNotEmpty())
         {
             xOrigin -= 1;
             xOrbit -= 1;
@@ -610,29 +662,47 @@ public partial class Player : CompositeDrawable
         if (xOrigin + 1 > Const.COLS - 1 || xOrbit + 1 > Const.COLS - 1)
             return;
 
+        if (isCellToRightNotEmpty())
+            return;
+
         xOrigin += 1;
         xOrbit += 1;
     }
 
     private void moveRightFully()
     {
-        while (xOrigin + 1 <= Const.COLS - 1 && xOrbit + 1 <= Const.COLS - 1)
+        while (xOrigin + 1 <= Const.COLS - 1 && xOrbit + 1 <= Const.COLS - 1 && !isCellToRightNotEmpty())
         {
             xOrigin += 1;
             xOrbit += 1;
         }
     }
 
+    // TODO: this needs to be fixed. both below methods are really broken (i think)
     private bool isCellToLeftNotEmpty()
     {
-        int lowestEmptyCell = getLowestEmptyCell(xOrigin);
-        return xOrigin <= 0 || lowestEmptyCell == -1 || board[lowestEmptyCell, xOrigin - 1] != TileType.Empty;
+        if (xOrigin > 0 && xOrbit > 0 && yOrigin >= 0 && yOrbit >= 0)
+        {
+            if (board[yOrigin, xOrigin - 1] != TileType.Empty || board[yOrbit, xOrbit - 1] != TileType.Empty)
+                return true;
+        }
+
+        return false;
+        // int lowestEmptyCell = Math.Min(xOrigin, xOrbit);
+        // return xOrigin <= 0 || /*lowestEmptyCell == -1 ||*/ board[lowestEmptyCell, xOrigin - 1] != TileType.Empty;
     }
 
     private bool isCellToRightNotEmpty()
     {
-        int lowestEmptyCell = getLowestEmptyCell(xOrigin);
-        return xOrigin >= Const.COLS - 1 || lowestEmptyCell == -1 || board[lowestEmptyCell, xOrigin + 1] != TileType.Empty;
+        if (xOrigin < Const.COLS - 1 && xOrbit < Const.COLS - 1 && yOrigin >= 0 && yOrbit >= 0)
+        {
+            if (board[yOrigin, xOrigin + 1] != TileType.Empty || board[yOrbit, xOrbit + 1] != TileType.Empty)
+                return true;
+        }
+
+        return false;
+        // int lowestEmptyCell = Math.Max(xOrigin, xOrbit);
+        // return xOrigin >= Const.COLS - 1 || /*lowestEmptyCell == -1 ||*/ board[lowestEmptyCell, xOrigin + 1] != TileType.Empty;
     }
 
     private void rotate(int dir)
