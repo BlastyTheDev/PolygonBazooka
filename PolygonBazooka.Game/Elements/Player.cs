@@ -22,6 +22,9 @@ public partial class Player : CompositeDrawable
     private readonly Sprite[] renderedShadowTiles;
     private readonly Sprite[] renderedQueueTile;
 
+    private readonly List<TextureAnimation> renderedClearAnimations;
+    public long LastClear { get; private set; }
+
     private const int cw = -1;
     private const int ccw = 1;
 
@@ -78,12 +81,17 @@ public partial class Player : CompositeDrawable
         renderedFallingTiles = new Sprite[2];
         renderedShadowTiles = new Sprite[2];
         renderedQueueTile = new Sprite[4];
+
+        renderedClearAnimations = new();
+
         resetBoard();
         SetFallingBlock(TileType.Yellow, TileType.Green);
     }
 
     [Resolved]
     private TextureStore textures { get; set; }
+
+    private Texture clearSpriteSheet;
 
     private TextureAnimation boardAnimation;
     private TextureAnimation blueTileAnimation;
@@ -97,8 +105,6 @@ public partial class Player : CompositeDrawable
     private TextureAnimation bonusTileAnimation;
     private TextureAnimation bonusShadowAnimation;
     private TextureAnimation garbageTileAnimation;
-
-    private TextureAnimation clearAnimation;
 
     public void SetFallingBlock(TileType origin, TileType orbit)
     {
@@ -151,21 +157,10 @@ public partial class Player : CompositeDrawable
         garbageTileAnimation = new TextureAnimation { Origin = Anchor.TopLeft, Anchor = Anchor.Centre };
         garbageTileAnimation.AddFrame(textures.Get("garbage"));
 
-        clearAnimation = new TextureAnimation { Origin = Anchor.TopLeft, Anchor = Anchor.Centre, DefaultFrameLength = 50 };
-        Texture clearSpriteSheet = textures.Get("clear_sprite_sheet");
-        clearAnimation.AddFrame(clearSpriteSheet.Crop(new RectangleF(0, 0, 48, 48)));
-        clearAnimation.AddFrame(clearSpriteSheet.Crop(new RectangleF(48, 0, 48, 48)));
-        clearAnimation.AddFrame(clearSpriteSheet.Crop(new RectangleF(48 * 2, 0, 48, 48)));
-        clearAnimation.AddFrame(clearSpriteSheet.Crop(new RectangleF(48 * 3, 0, 48, 48)));
-        clearAnimation.AddFrame(clearSpriteSheet.Crop(new RectangleF(48 * 4, 0, 48, 48)));
-        clearAnimation.AddFrame(clearSpriteSheet.Crop(new RectangleF(48 * 5, 0, 48, 48)));
-        clearAnimation.AddFrame(clearSpriteSheet.Crop(new RectangleF(48 * 6, 0, 48, 48)));
-        clearAnimation.AddFrame(clearSpriteSheet.Crop(new RectangleF(48 * 7, 0, 48, 48)));
-        clearAnimation.Scale /= 2;
+        clearSpriteSheet = textures.Get("clear_sprite_sheet");
 
         // render the board at the bottom layer
         AddInternal(boardAnimation);
-        // AddInternal(clearAnimation);
     }
 
     protected override void Update()
@@ -204,42 +199,11 @@ public partial class Player : CompositeDrawable
             lastRightAutoRepeat = DateTimeOffset.Now.ToUnixTimeMilliseconds();
         }
 
-        if (DateTimeOffset.Now.ToUnixTimeMilliseconds() - lastFallingGravityMovement >= GravityRate)
+        if (!IsClearing())
         {
-            lastFallingGravityMovement = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-
-            int originLowestEmptyCell = getLowestEmptyCell(xOrigin);
-            int orbitLowestEmptyCell = getLowestEmptyCell(xOrbit);
-
-            if (yOrigin < yOrbit && !isSideways()) originLowestEmptyCell--;
-            if (yOrbit < yOrigin && !isSideways()) orbitLowestEmptyCell--;
-
-            if (yOrigin < originLowestEmptyCell && fallingBlockOrigin != TileType.Empty)
-                yOrigin += 1;
-            else if (fallingBlockOrigin != TileType.Empty)
+            if (DateTimeOffset.Now.ToUnixTimeMilliseconds() - lastFallingGravityMovement >= GravityRate)
             {
-                board[yOrigin, xOrigin] = fallingBlockOrigin;
-                fallingBlockOrigin = TileType.Empty;
-            }
-
-            if (yOrbit < orbitLowestEmptyCell && fallingBlockOrbit != TileType.Empty)
-                yOrbit += 1;
-            else if (fallingBlockOrbit != TileType.Empty)
-            {
-                board[yOrbit, xOrbit] = fallingBlockOrbit;
-                fallingBlockOrbit = TileType.Empty;
-            }
-
-            if (fallingBlockOrigin == TileType.Empty && fallingBlockOrbit == TileType.Empty)
-                nextFallingBlock();
-        }
-
-        // useless
-        if (downPressed)
-        {
-            if (DateTimeOffset.Now.ToUnixTimeMilliseconds() - lastDownAutoRepeat >= SoftDropRate)
-            {
-                lastDownAutoRepeat = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+                lastFallingGravityMovement = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
                 int originLowestEmptyCell = getLowestEmptyCell(xOrigin);
                 int orbitLowestEmptyCell = getLowestEmptyCell(xOrbit);
@@ -247,19 +211,59 @@ public partial class Player : CompositeDrawable
                 if (yOrigin < yOrbit && !isSideways()) originLowestEmptyCell--;
                 if (yOrbit < yOrigin && !isSideways()) orbitLowestEmptyCell--;
 
-                if (yOrigin < originLowestEmptyCell)
+                if (yOrigin < originLowestEmptyCell && fallingBlockOrigin != TileType.Empty)
                     yOrigin += 1;
-                if (yOrbit < orbitLowestEmptyCell)
+                else if (fallingBlockOrigin != TileType.Empty)
+                {
+                    board[yOrigin, xOrigin] = fallingBlockOrigin;
+                    fallingBlockOrigin = TileType.Empty;
+                }
+
+                if (yOrbit < orbitLowestEmptyCell && fallingBlockOrbit != TileType.Empty)
                     yOrbit += 1;
+                else if (fallingBlockOrbit != TileType.Empty)
+                {
+                    board[yOrbit, xOrbit] = fallingBlockOrbit;
+                    fallingBlockOrbit = TileType.Empty;
+                }
+
+                if (fallingBlockOrigin == TileType.Empty && fallingBlockOrbit == TileType.Empty)
+                    nextFallingBlock();
             }
+
+            // useless
+            if (downPressed)
+            {
+                if (DateTimeOffset.Now.ToUnixTimeMilliseconds() - lastDownAutoRepeat >= SoftDropRate)
+                {
+                    lastDownAutoRepeat = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+
+                    int originLowestEmptyCell = getLowestEmptyCell(xOrigin);
+                    int orbitLowestEmptyCell = getLowestEmptyCell(xOrbit);
+
+                    if (yOrigin < yOrbit && !isSideways()) originLowestEmptyCell--;
+                    if (yOrbit < yOrigin && !isSideways()) orbitLowestEmptyCell--;
+
+                    if (yOrigin < originLowestEmptyCell)
+                        yOrigin += 1;
+                    if (yOrbit < orbitLowestEmptyCell)
+                        yOrbit += 1;
+                }
+            }
+
+            processGravity();
         }
 
         clear();
-        processGravity();
 
         renderTiles();
 
         oldBoard = board.Clone() as TileType[,];
+    }
+
+    public bool IsClearing()
+    {
+        return DateTimeOffset.Now.ToUnixTimeMilliseconds() - LastClear < Const.CLEAR_TIME;
     }
 
     private void clear()
@@ -293,17 +297,6 @@ public partial class Player : CompositeDrawable
                     for (int i = 0; i < matchLength; i++)
                         clearedTiles.Add(new Vector2(col + i, row));
                 }
-
-                // if (col + 2 < Const.COLS)
-                // {
-                //     if ((board[row, col] == board[row, col + 1] && board[row, col] == board[row, col + 2]) ||
-                //         (board[row, col] == board[row, col + 2] && board[row, col + 1] == TileType.Bonus))
-                //     {
-                //         clearedTiles.Add(new Vector2(col, row));
-                //         clearedTiles.Add(new Vector2(col + 1, row));
-                //         clearedTiles.Add(new Vector2(col + 2, row));
-                //     }
-                // }
             }
         }
 
@@ -334,37 +327,71 @@ public partial class Player : CompositeDrawable
                     for (int i = 0; i < matchLength; i++)
                         clearedTiles.Add(new Vector2(col, row + i));
                 }
-
-                // if (row + 2 < Const.ROWS)
-                // {
-                //     if ((board[row, col] == board[row + 1, col] && board[row, col] == board[row + 2, col]) ||
-                //         (board[row, col] == board[row + 2, col] && board[row + 1, col] == TileType.Bonus))
-                //     {
-                //         clearedTiles.Add(new Vector2(col, row));
-                //         clearedTiles.Add(new Vector2(col, row + 1));
-                //         clearedTiles.Add(new Vector2(col, row + 2));
-                //     }
-                // }
             }
         }
 
         // clear tiles and adjacent garbage
         foreach (Vector2 tile in clearedTiles)
         {
+            LastClear = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+
             board[(int)tile.Y, (int)tile.X] = TileType.Empty;
+            renderClearAnimation(tile.X, tile.Y);
+
             // if tile below is garbage
             if ((int)tile.Y - 1 >= 0 && board[(int)tile.Y - 1, (int)tile.X] == TileType.Garbage)
+            {
                 board[(int)tile.Y - 1, (int)tile.X] = TileType.Empty;
+                renderClearAnimation(tile.X, tile.Y);
+            }
+
             // if tile above is garbage
             if ((int)tile.Y + 1 < Const.ROWS && board[(int)tile.Y + 1, (int)tile.X] == TileType.Garbage)
+            {
                 board[(int)tile.Y + 1, (int)tile.X] = TileType.Empty;
+                renderClearAnimation(tile.X, tile.Y);
+            }
+
             // if tile to the left is garbage
             if ((int)tile.X - 1 >= 0 && board[(int)tile.Y, (int)tile.X - 1] == TileType.Garbage)
+            {
                 board[(int)tile.Y, (int)tile.X - 1] = TileType.Empty;
+                renderClearAnimation(tile.X, tile.Y);
+            }
+
             // if tile to the right is garbage
             if ((int)tile.X + 1 < Const.COLS && board[(int)tile.Y, (int)tile.X + 1] == TileType.Garbage)
+            {
                 board[(int)tile.Y, (int)tile.X + 1] = TileType.Empty;
+                renderClearAnimation(tile.X, tile.Y);
+            }
         }
+    }
+
+    private void renderClearAnimation(float x, float y)
+    {
+        TextureAnimation clearAnimation = new TextureAnimation
+        {
+            Origin = Anchor.Centre,
+            Anchor = Anchor.Centre,
+            DefaultFrameLength = 50,
+            Position = new Vector2(6 + x * 8, 6 + y * 8),
+            Loop = false,
+        };
+        clearAnimation.AddFrame(clearSpriteSheet.Crop(new RectangleF(0, 0, 48, 48)));
+        clearAnimation.AddFrame(clearSpriteSheet.Crop(new RectangleF(48, 0, 48, 48)));
+        clearAnimation.AddFrame(clearSpriteSheet.Crop(new RectangleF(48 * 2, 0, 48, 48)));
+        clearAnimation.AddFrame(clearSpriteSheet.Crop(new RectangleF(48 * 3, 0, 48, 48)));
+        clearAnimation.AddFrame(clearSpriteSheet.Crop(new RectangleF(48 * 4, 0, 48, 48)));
+        clearAnimation.AddFrame(clearSpriteSheet.Crop(new RectangleF(48 * 5, 0, 48, 48)));
+        clearAnimation.AddFrame(clearSpriteSheet.Crop(new RectangleF(48 * 6, 0, 48, 48)));
+        clearAnimation.AddFrame(clearSpriteSheet.Crop(new RectangleF(48 * 7, 0, 48, 48)));
+        // add an extra frame for deletion of animation
+        clearAnimation.AddFrame(clearSpriteSheet.Crop(new RectangleF(48 * 7, 0, 48, 48)));
+        clearAnimation.Scale /= 2;
+
+        renderedClearAnimations.Add(clearAnimation);
+        AddInternal(clearAnimation);
     }
 
     private Sprite createTileSprite(int row, int col, TileType type, bool shadow = false, bool queue = false, int offset = 0)
@@ -506,6 +533,14 @@ public partial class Player : CompositeDrawable
         {
             renderQueueTile(nextNextBlockOrigin, 25, 2);
             renderQueueTile(nextNextBlockOrbit, 33, 3);
+        }
+
+        foreach (TextureAnimation animation in renderedClearAnimations)
+        {
+            if (animation.CurrentFrameIndex != 8)
+                continue;
+
+            RemoveInternal(animation, true);
         }
     }
 
@@ -670,6 +705,9 @@ public partial class Player : CompositeDrawable
 
     private void moveLeft()
     {
+        if (IsClearing())
+            return;
+
         if (xOrigin - 1 < 0 || xOrbit - 1 < 0)
             return;
 
@@ -682,7 +720,7 @@ public partial class Player : CompositeDrawable
 
     private void moveLeftFully()
     {
-        while (xOrigin - 1 >= 0 && xOrbit - 1 >= 0 && !isCellToLeftNotEmpty())
+        while (xOrigin - 1 >= 0 && xOrbit - 1 >= 0 && !isCellToLeftNotEmpty() && !IsClearing())
         {
             xOrigin -= 1;
             xOrbit -= 1;
@@ -691,6 +729,9 @@ public partial class Player : CompositeDrawable
 
     private void moveRight()
     {
+        if (IsClearing())
+            return;
+
         if (xOrigin + 1 > Const.COLS - 1 || xOrbit + 1 > Const.COLS - 1)
             return;
 
@@ -703,7 +744,7 @@ public partial class Player : CompositeDrawable
 
     private void moveRightFully()
     {
-        while (xOrigin + 1 <= Const.COLS - 1 && xOrbit + 1 <= Const.COLS - 1 && !isCellToRightNotEmpty())
+        while (xOrigin + 1 <= Const.COLS - 1 && xOrbit + 1 <= Const.COLS - 1 && !isCellToRightNotEmpty() && !IsClearing())
         {
             xOrigin += 1;
             xOrbit += 1;

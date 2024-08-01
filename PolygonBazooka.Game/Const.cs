@@ -18,4 +18,6 @@ public class Const
         TileType.Yellow,
         TileType.Bonus,
     ];
+
+    public const int CLEAR_TIME = 50 * 8;
 }

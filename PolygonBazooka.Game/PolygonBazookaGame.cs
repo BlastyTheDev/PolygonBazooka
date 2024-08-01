@@ -38,7 +38,7 @@ public partial class PolygonBazookaGame : PolygonBazookaGameBase
 
     protected override bool OnKeyDown(KeyDownEvent e)
     {
-        if (gameState == GameState.Playing && !e.Repeat)
+        if (gameState == GameState.Playing && !e.Repeat /* && DateTimeOffset.Now.ToUnixTimeMilliseconds() - player.LastClear >= Const.CLEAR_TIME*/)
         {
             switch (e.Key)
             {
@@ -54,22 +54,28 @@ public partial class PolygonBazookaGame : PolygonBazookaGameBase
                 case Key.S:
                     player.SoftDrop(true);
                     return true;
+            }
 
-                case Key.Right:
-                    player.RotateCw();
-                    return true;
+            if (!player.IsClearing())
+            {
+                switch (e.Key)
+                {
+                    case Key.Right:
+                        player.RotateCw();
+                        return true;
 
-                case Key.Left:
-                    player.RotateCcw();
-                    return true;
+                    case Key.Left:
+                        player.RotateCcw();
+                        return true;
 
-                case Key.Up:
-                    player.Flip();
-                    return true;
+                    case Key.Up:
+                        player.Flip();
+                        return true;
 
-                case Key.Space:
-                    player.HardDrop();
-                    return true;
+                    case Key.Space:
+                        player.HardDrop();
+                        return true;
+                }
             }
         }
 
