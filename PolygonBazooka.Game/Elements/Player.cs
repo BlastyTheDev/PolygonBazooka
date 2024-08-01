@@ -4,6 +4,7 @@ using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Animations;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Primitives;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.Textures;
 using osu.Framework.Utils;
@@ -97,6 +98,8 @@ public partial class Player : CompositeDrawable
     private TextureAnimation bonusShadowAnimation;
     private TextureAnimation garbageTileAnimation;
 
+    private TextureAnimation clearAnimation;
+
     public void SetFallingBlock(TileType origin, TileType orbit)
     {
         fallingBlockOrigin = origin;
@@ -148,8 +151,21 @@ public partial class Player : CompositeDrawable
         garbageTileAnimation = new TextureAnimation { Origin = Anchor.TopLeft, Anchor = Anchor.Centre };
         garbageTileAnimation.AddFrame(textures.Get("garbage"));
 
+        clearAnimation = new TextureAnimation { Origin = Anchor.TopLeft, Anchor = Anchor.Centre, DefaultFrameLength = 50 };
+        Texture clearSpriteSheet = textures.Get("clear_sprite_sheet");
+        clearAnimation.AddFrame(clearSpriteSheet.Crop(new RectangleF(0, 0, 48, 48)));
+        clearAnimation.AddFrame(clearSpriteSheet.Crop(new RectangleF(48, 0, 48, 48)));
+        clearAnimation.AddFrame(clearSpriteSheet.Crop(new RectangleF(48 * 2, 0, 48, 48)));
+        clearAnimation.AddFrame(clearSpriteSheet.Crop(new RectangleF(48 * 3, 0, 48, 48)));
+        clearAnimation.AddFrame(clearSpriteSheet.Crop(new RectangleF(48 * 4, 0, 48, 48)));
+        clearAnimation.AddFrame(clearSpriteSheet.Crop(new RectangleF(48 * 5, 0, 48, 48)));
+        clearAnimation.AddFrame(clearSpriteSheet.Crop(new RectangleF(48 * 6, 0, 48, 48)));
+        clearAnimation.AddFrame(clearSpriteSheet.Crop(new RectangleF(48 * 7, 0, 48, 48)));
+        clearAnimation.Scale /= 2;
+
         // render the board at the bottom layer
         AddInternal(boardAnimation);
+        // AddInternal(clearAnimation);
     }
 
     protected override void Update()
@@ -360,6 +376,9 @@ public partial class Player : CompositeDrawable
         };
     }
 
+    /// <summary>
+    /// Both shadows are rendered first to have the falling blocks on top
+    /// </summary>
     private void renderTiles()
     {
         // render board tiles
@@ -395,9 +414,12 @@ public partial class Player : CompositeDrawable
         }
 
         // render falling block tiles and shadow
-        if (fallingBlockOrigin != TileType.Empty)
+        bool renderFallingOrigin = fallingBlockOrigin != TileType.Empty;
+        bool renderFallingOrbit = fallingBlockOrbit != TileType.Empty;
+
+        // render origin shadow
+        if (renderFallingOrigin)
         {
-            // shadows
             int originShadowYOffset = 0;
             if (yOrigin < yOrbit)
                 originShadowYOffset = -1;
@@ -408,29 +430,10 @@ public partial class Player : CompositeDrawable
                 RemoveInternal(oldOriginShadow, false);
             renderedShadowTiles[0] = originShadow;
             AddInternal(originShadow);
-
-            // tiles
-            Sprite origin = createTileSprite(yOrigin, xOrigin, fallingBlockOrigin);
-            Sprite oldOrigin = renderedFallingTiles[0];
-            if (oldOrigin != null)
-                RemoveInternal(oldOrigin, false);
-            renderedFallingTiles[0] = origin;
-            AddInternal(origin);
-        }
-        else
-        {
-            Sprite fallingTile = renderedFallingTiles[0];
-            if (fallingTile != null)
-                RemoveInternal(fallingTile, true);
-            renderedFallingTiles[0] = null;
-
-            Sprite shadow = renderedShadowTiles[0];
-            if (shadow != null)
-                RemoveInternal(shadow, true);
-            renderedShadowTiles[0] = null;
         }
 
-        if (fallingBlockOrbit != TileType.Empty)
+        // render orbit shadow
+        if (renderFallingOrbit)
         {
             int orbitShadowYOffset = 0;
             if (yOrigin > yOrbit)
@@ -442,7 +445,22 @@ public partial class Player : CompositeDrawable
                 RemoveInternal(oldOrbitShadow, false);
             renderedShadowTiles[1] = orbitShadow;
             AddInternal(orbitShadow);
+        }
 
+        // render origin
+        if (renderFallingOrigin)
+        {
+            Sprite origin = createTileSprite(yOrigin, xOrigin, fallingBlockOrigin);
+            Sprite oldOrigin = renderedFallingTiles[0];
+            if (oldOrigin != null)
+                RemoveInternal(oldOrigin, false);
+            renderedFallingTiles[0] = origin;
+            AddInternal(origin);
+        }
+
+        // render orbit
+        if (renderFallingOrbit)
+        {
             Sprite orbit = createTileSprite(yOrbit, xOrbit, fallingBlockOrbit);
             Sprite oldOrbit = renderedFallingTiles[1];
             if (oldOrbit != null)
@@ -450,17 +468,31 @@ public partial class Player : CompositeDrawable
             renderedFallingTiles[1] = orbit;
             AddInternal(orbit);
         }
-        else
-        {
-            Sprite sprite = renderedFallingTiles[1];
-            if (sprite != null)
-                RemoveInternal(sprite, true);
-            renderedFallingTiles[1] = null;
 
+        if (!renderFallingOrigin)
+        {
+            Sprite shadow = renderedShadowTiles[0];
+            if (shadow != null)
+                RemoveInternal(shadow, true);
+            renderedShadowTiles[0] = null;
+
+            Sprite fallingTile = renderedFallingTiles[0];
+            if (fallingTile != null)
+                RemoveInternal(fallingTile, true);
+            renderedFallingTiles[0] = null;
+        }
+
+        if (!renderFallingOrbit)
+        {
             Sprite shadow = renderedShadowTiles[1];
             if (shadow != null)
                 RemoveInternal(shadow, true);
             renderedShadowTiles[1] = null;
+
+            Sprite sprite = renderedFallingTiles[1];
+            if (sprite != null)
+                RemoveInternal(sprite, true);
+            renderedFallingTiles[1] = null;
         }
 
         // render next in queue
@@ -678,7 +710,6 @@ public partial class Player : CompositeDrawable
         }
     }
 
-    // TODO: this needs to be fixed. both below methods are really broken (i think)
     private bool isCellToLeftNotEmpty()
     {
         if (xOrigin > 0 && xOrbit > 0)
@@ -731,6 +762,9 @@ public partial class Player : CompositeDrawable
 
     private void rotate(int dir)
     {
+        if (isCellToLeftNotEmpty() && isCellToRightNotEmpty() && !isSideways())
+            return;
+
         // origin above orbit
         if (yOrigin > yOrbit)
         {
@@ -782,29 +816,52 @@ public partial class Player : CompositeDrawable
             // orbit left of origin (to move to right)
             if (xOrigin > xOrbit)
             {
-                if (isCellToRightNotEmpty())
+                if (isCellToLeftNotEmpty() && isCellToRightNotEmpty())
+                    (xOrigin, xOrbit) = (xOrbit, xOrigin);
+                else if (isCellToRightNotEmpty())
                     moveLeft();
                 xOrbit = xOrigin + 1;
             }
             // orbit right of origin (to move to left)
             else if (xOrigin < xOrbit)
             {
-                if (isCellToLeftNotEmpty())
+                if (isCellToLeftNotEmpty() && isCellToRightNotEmpty())
+                    (xOrigin, xOrbit) = (xOrbit, xOrigin);
+                else if (isCellToLeftNotEmpty())
                     moveRight();
                 xOrbit = xOrigin - 1;
             }
         }
         else
         {
-            // orbit above origin: needs check bottom for clear
+            // for some reason these are flipped and i have no idea why but it works
+            // orbit above origin
             if (yOrbit > yOrigin)
             {
-                // TODO: implement checks for whether block below is occupied
                 yOrbit = yOrigin - 1;
             }
             // orbit below origin
             else if (yOrbit < yOrigin)
             {
+                // ReSharper disable once ReplaceWithSingleAssignment.False
+                bool kick = false;
+
+                // ReSharper disable once ConvertIfToOrExpression
+                if (yOrigin >= Const.ROWS - 1)
+                    kick = true;
+
+                if (yOrigin >= 0 && !kick)
+                {
+                    if (board[yOrigin + 1, xOrigin] != TileType.Empty)
+                        kick = true;
+                }
+
+                if (kick)
+                {
+                    yOrigin--;
+                    yOrbit--;
+                }
+
                 yOrbit = yOrigin + 1;
             }
         }
