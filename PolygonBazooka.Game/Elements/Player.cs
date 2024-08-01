@@ -681,28 +681,52 @@ public partial class Player : CompositeDrawable
     // TODO: this needs to be fixed. both below methods are really broken (i think)
     private bool isCellToLeftNotEmpty()
     {
-        if (xOrigin > 0 && xOrbit > 0 && yOrigin >= 0 && yOrbit >= 0)
+        if (xOrigin > 0 && xOrbit > 0)
         {
-            if (board[yOrigin, xOrigin - 1] != TileType.Empty || board[yOrbit, xOrbit - 1] != TileType.Empty)
-                return true;
+            if (yOrigin < 0 && yOrbit < 0)
+                return false;
+
+            if (yOrigin >= 0)
+            {
+                if (board[yOrigin, xOrigin - 1] != TileType.Empty)
+                    return true;
+            }
+
+            if (yOrbit >= 0)
+            {
+                if (board[yOrbit, xOrbit - 1] != TileType.Empty)
+                    return true;
+            }
+
+            return false;
         }
 
-        return false;
-        // int lowestEmptyCell = Math.Min(xOrigin, xOrbit);
-        // return xOrigin <= 0 || /*lowestEmptyCell == -1 ||*/ board[lowestEmptyCell, xOrigin - 1] != TileType.Empty;
+        return true;
     }
 
     private bool isCellToRightNotEmpty()
     {
-        if (xOrigin < Const.COLS - 1 && xOrbit < Const.COLS - 1 && yOrigin >= 0 && yOrbit >= 0)
+        if (xOrigin < Const.COLS - 1 && xOrbit < Const.COLS - 1)
         {
-            if (board[yOrigin, xOrigin + 1] != TileType.Empty || board[yOrbit, xOrbit + 1] != TileType.Empty)
-                return true;
+            if (yOrigin < 0 && yOrbit < 0)
+                return false;
+
+            if (yOrigin >= 0)
+            {
+                if (board[yOrigin, xOrigin + 1] != TileType.Empty)
+                    return true;
+            }
+
+            if (yOrbit >= 0)
+            {
+                if (board[yOrbit, xOrbit + 1] != TileType.Empty)
+                    return true;
+            }
+
+            return false;
         }
 
-        return false;
-        // int lowestEmptyCell = Math.Max(xOrigin, xOrbit);
-        // return xOrigin >= Const.COLS - 1 || /*lowestEmptyCell == -1 ||*/ board[lowestEmptyCell, xOrigin + 1] != TileType.Empty;
+        return true;
     }
 
     private void rotate(int dir)
