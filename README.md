@@ -14,3 +14,8 @@ Planned support for:
 MacOS will probably be supported, however, I will not make an effort to compile for MacOS if it is not possible for me.
 
 Mobile support is **not planned**.
+
+## License
+**Polygon Bazooka** is licensed under the [GNU General Public License v2.0](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html).
+
+[tl;dr](https://www.tldrlegal.com/license/gnu-general-public-license-v2) you are allowed to use this commercially, modify, distribute (including modified versions) as long as you track changes, state the source (this repository), your modified version is on the same license, and you include the original copyright.
