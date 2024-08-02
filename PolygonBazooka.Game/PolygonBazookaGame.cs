@@ -32,7 +32,7 @@ public partial class PolygonBazookaGame : PolygonBazookaGameBase
         {
             Origin = Anchor.Centre,
             Anchor = Anchor.TopLeft,
-            Position = new(100, 200)
+            Position = new(500, 200)
         }));
     }
 

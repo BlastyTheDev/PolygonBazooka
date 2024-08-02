@@ -279,12 +279,17 @@ public partial class Player : CompositeDrawable
                     continue;
 
                 int matchLength = 1;
+                int lastColourMatch = col;
                 TileType current = board[row, col];
 
                 for (int nextCol = col + 1; nextCol < Const.COLS; nextCol++)
                 {
                     if (board[row, nextCol] == current || board[row, nextCol] == TileType.Bonus)
+                    {
                         matchLength++;
+                        if (board[row, nextCol] == current)
+                            lastColourMatch = nextCol;
+                    }
                     else
                         break;
                 }
@@ -292,10 +297,13 @@ public partial class Player : CompositeDrawable
                 if (board[row, col + matchLength - 1] == TileType.Bonus)
                     matchLength--;
 
-                if (matchLength >= 3 && board[row, col + matchLength - 1] == current)
+                if (matchLength >= 3 && lastColourMatch > col + 1)
                 {
                     for (int i = 0; i < matchLength; i++)
-                        clearedTiles.Add(new Vector2(col + i, row));
+                    {
+                        if (col + i <= lastColourMatch)
+                            clearedTiles.Add(new Vector2(col + i, row));
+                    }
                 }
             }
         }
@@ -309,12 +317,17 @@ public partial class Player : CompositeDrawable
                     continue;
 
                 int matchLength = 1;
+                int lastColourMatch = row;
                 TileType current = board[row, col];
 
                 for (int nextRow = row + 1; nextRow < Const.ROWS; nextRow++)
                 {
                     if (board[nextRow, col] == current || board[nextRow, col] == TileType.Bonus)
+                    {
                         matchLength++;
+                        if (board[nextRow, col] == current)
+                            lastColourMatch = nextRow;
+                    }
                     else
                         break;
                 }
@@ -322,10 +335,13 @@ public partial class Player : CompositeDrawable
                 if (board[row + matchLength - 1, col] == TileType.Bonus)
                     matchLength--;
 
-                if (matchLength >= 3 && board[row + matchLength - 1, col] == current)
+                if (matchLength >= 3 && lastColourMatch > row + 1)
                 {
                     for (int i = 0; i < matchLength; i++)
-                        clearedTiles.Add(new Vector2(col, row + i));
+                    {
+                        if (row + i <= lastColourMatch)
+                            clearedTiles.Add(new Vector2(col, row + i));
+                    }
                 }
             }
         }
