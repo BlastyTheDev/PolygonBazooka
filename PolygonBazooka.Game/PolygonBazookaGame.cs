@@ -1,4 +1,5 @@
-﻿using osu.Framework.Allocation;
+﻿using System;
+using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Input.Events;
 using osu.Framework.Screens;
@@ -12,9 +13,12 @@ public partial class PolygonBazookaGame : PolygonBazookaGameBase
     private ScreenStack screenStack;
 
     // Start as playing for now
-    private GameState gameState = GameState.Playing;
+    protected GameState State = GameState.Playing;
 
     private Player player;
+
+    private bool retryHeld;
+    private long retryHeldStart;
 
     [BackgroundDependencyLoader]
     private void load()
@@ -36,9 +40,16 @@ public partial class PolygonBazookaGame : PolygonBazookaGameBase
         }));
     }
 
+    protected override void UpdateAfterChildren()
+    {
+        base.UpdateAfterChildren();
+
+        State = player.Failed ? GameState.GameOver : GameState.Playing;
+    }
+
     protected override bool OnKeyDown(KeyDownEvent e)
     {
-        if (gameState == GameState.Playing && !e.Repeat /* && DateTimeOffset.Now.ToUnixTimeMilliseconds() - player.LastClear >= Const.CLEAR_TIME*/)
+        if (State == GameState.Playing && !e.Repeat)
         {
             switch (e.Key)
             {
@@ -79,12 +90,31 @@ public partial class PolygonBazookaGame : PolygonBazookaGameBase
             }
         }
 
+        if (e.Key == Key.R)
+        {
+            if (player.Failed)
+            {
+                if (!retryHeld)
+                    retryHeldStart = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+
+                retryHeld = true;
+
+                if (retryHeld && DateTimeOffset.Now.ToUnixTimeMilliseconds() - retryHeldStart >= 1000)
+                {
+                    player.Reset();
+                    retryHeld = false;
+                }
+
+                return true;
+            }
+        }
+
         return false;
     }
 
     protected override void OnKeyUp(KeyUpEvent e)
     {
-        if (gameState == GameState.Playing)
+        if (State == GameState.Playing)
         {
             switch (e.Key)
             {
@@ -99,6 +129,10 @@ public partial class PolygonBazookaGame : PolygonBazookaGameBase
                 // useless
                 case Key.S:
                     player.SoftDrop(false);
+                    break;
+
+                case Key.R:
+                    retryHeld = false;
                     break;
             }
         }

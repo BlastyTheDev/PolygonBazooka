@@ -1,6 +1,5 @@
 ﻿using osu.Framework.Platform;
 using osu.Framework;
-using PolygonBazooka.Game;
 
 namespace PolygonBazooka.Desktop
 {
@@ -9,7 +8,7 @@ namespace PolygonBazooka.Desktop
         public static void Main()
         {
             using (GameHost host = Host.GetSuitableDesktopHost(@"PolygonBazooka"))
-            using (osu.Framework.Game game = new PolygonBazookaGame())
+            using (osu.Framework.Game game = new PolygonBazookaGameDesktop())
                 host.Run(game);
         }
     }

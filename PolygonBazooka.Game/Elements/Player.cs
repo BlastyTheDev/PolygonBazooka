@@ -73,6 +73,8 @@ public partial class Player : CompositeDrawable
     public float GravityRate = 1000;
     private long lastFallingGravityMovement;
 
+    public bool Failed;
+
     public Player()
     {
         board = new TileType[Const.ROWS, Const.COLS];
@@ -85,7 +87,15 @@ public partial class Player : CompositeDrawable
         renderedClearAnimations = new();
 
         resetBoard();
-        SetFallingBlock(TileType.Yellow, TileType.Green);
+        nextFallingBlock();
+    }
+
+    public void Reset()
+    {
+        Failed = false;
+
+        resetBoard();
+        nextFallingBlock();
     }
 
     [Resolved]
@@ -167,6 +177,9 @@ public partial class Player : CompositeDrawable
     {
         base.Update();
 
+        if (Failed)
+            return;
+
         // left DAS
         if (!leftPressed)
             leftDasActive = false;
@@ -215,7 +228,8 @@ public partial class Player : CompositeDrawable
                     yOrigin += 1;
                 else if (fallingBlockOrigin != TileType.Empty)
                 {
-                    board[yOrigin, xOrigin] = fallingBlockOrigin;
+                    // board[yOrigin, xOrigin] = fallingBlockOrigin;
+                    dropPiece(true, yOrigin);
                     fallingBlockOrigin = TileType.Empty;
                 }
 
@@ -223,7 +237,8 @@ public partial class Player : CompositeDrawable
                     yOrbit += 1;
                 else if (fallingBlockOrbit != TileType.Empty)
                 {
-                    board[yOrbit, xOrbit] = fallingBlockOrbit;
+                    // board[yOrbit, xOrbit] = fallingBlockOrbit;
+                    dropPiece(false, yOrbit);
                     fallingBlockOrbit = TileType.Empty;
                 }
 
@@ -628,6 +643,24 @@ public partial class Player : CompositeDrawable
         }
     }
 
+    private void dropPiece(bool origin, int destY)
+    {
+        if (destY < 0)
+        {
+            Failed = true;
+        }
+        else if (origin)
+        {
+            board[destY, xOrigin] = fallingBlockOrigin;
+            fallingBlockOrigin = TileType.Empty;
+        }
+        else
+        {
+            board[destY, xOrbit] = fallingBlockOrbit;
+            fallingBlockOrbit = TileType.Empty;
+        }
+    }
+
     public void HardDrop()
     {
         // drop origin first if lower
@@ -635,16 +668,20 @@ public partial class Player : CompositeDrawable
         if (yOrigin <= yOrbit)
         {
             if (fallingBlockOrbit != TileType.Empty)
-                board[getLowestEmptyCell(xOrbit), xOrbit] = fallingBlockOrbit;
+                // board[getLowestEmptyCell(xOrbit), xOrbit] = fallingBlockOrbit;
+                dropPiece(false, getLowestEmptyCell(xOrbit));
             if (fallingBlockOrigin != TileType.Empty)
-                board[getLowestEmptyCell(xOrigin), xOrigin] = fallingBlockOrigin;
+                // board[getLowestEmptyCell(xOrigin), xOrigin] = fallingBlockOrigin;
+                dropPiece(true, getLowestEmptyCell(xOrigin));
         }
         else
         {
             if (fallingBlockOrigin != TileType.Empty)
-                board[getLowestEmptyCell(xOrigin), xOrigin] = fallingBlockOrigin;
+                // board[getLowestEmptyCell(xOrigin), xOrigin] = fallingBlockOrigin;
+                dropPiece(true, getLowestEmptyCell(xOrigin));
             if (fallingBlockOrbit != TileType.Empty)
-                board[getLowestEmptyCell(xOrbit), xOrbit] = fallingBlockOrbit;
+                // board[getLowestEmptyCell(xOrbit), xOrbit] = fallingBlockOrbit;
+                dropPiece(false, getLowestEmptyCell(xOrigin));
         }
 
         nextFallingBlock();
