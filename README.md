@@ -5,6 +5,11 @@ Currently, all game assets are created by [Machi](https://x.com/marblechese).
 
 This is a rewrite of the game, using the [osu!framework](https://github.com/ppy/osu-framework) in C#.
 
+
+## See also: [monogame branch](https://github.com/BlastyTheDev/PolygonBazooka/tree/monogame)
+Newer, MonoGame port. Will supersede the osu!framework version.
+
+
 ## Platforms
 Planned support for:
 - Windows (probably 10 and above)
