@@ -1,46 +1,52 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using MonoGame.Extended;
 using MonoGame.Extended.Screens;
+using PolygonBazooka.Elements;
+using PolygonBazooka.Screens;
 
 namespace PolygonBazooka;
 
 public class PolygonBazookaGame : Game
 {
-    private readonly GraphicsDeviceManager _graphics;
-    private SpriteBatch _spriteBatch;
-
     private readonly ScreenManager _screenManager = new();
-    private readonly FramesPerSecondCounter _fpsCounter = new();
+    private readonly Dictionary<ScreenName, GameScreen> _screens = new();
 
-    public DiscordRichPresence DiscordRpc { get; private set; } = new();
-    
+    public readonly DiscordRichPresence DiscordRpc = new();
+
     public PolygonBazookaGame()
     {
-        _graphics = new GraphicsDeviceManager(this);
-        _graphics.PreferredBackBufferWidth = 1280;
-        _graphics.PreferredBackBufferHeight = 720;
-        _graphics.ApplyChanges();
+        var graphics = new GraphicsDeviceManager(this);
+        graphics.PreferredBackBufferWidth = 1280;
+        graphics.PreferredBackBufferHeight = 720;
+        graphics.SynchronizeWithVerticalRetrace = false;
+        graphics.ApplyChanges();
 
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
         Window.AllowUserResizing = true;
+        IsFixedTimeStep = false;
 
         Components.Add(_screenManager);
     }
 
     protected override void Initialize()
     {
+        _screens.Add(ScreenName.MainMenu, new MainMenuScreen(this));
+        _screens.Add(ScreenName.Playing, new PlayingScreen(this));
+
         base.Initialize();
     }
 
     protected override void LoadContent()
     {
-        _spriteBatch = new SpriteBatch(GraphicsDevice);
+        // playing screen for now
+        LoadScreen(ScreenName.Playing);
+    }
 
-        // TODO: use this.Content to load your game content here
+    private void LoadScreen(ScreenName screen)
+    {
+        _screenManager.LoadScreen(_screens[screen]);
     }
 
     protected override void Update(GameTime gameTime)
@@ -49,17 +55,12 @@ public class PolygonBazookaGame : Game
             Keyboard.GetState().IsKeyDown(Keys.Escape))
             Exit();
 
-        _fpsCounter.Update(gameTime);
-
         base.Update(gameTime);
     }
 
     protected override void Draw(GameTime gameTime)
     {
         GraphicsDevice.Clear(Color.Black);
-
-        _fpsCounter.Draw(gameTime);
-        Window.Title = $"Polygon Bazooka - FPS: {_fpsCounter.FramesPerSecond}";
 
         base.Draw(gameTime);
     }
