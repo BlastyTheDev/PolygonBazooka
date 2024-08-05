@@ -1,2 +1,2 @@
-﻿using var game = new PolygonBazooka.Game1();
+﻿using var game = new PolygonBazooka.PolygonBazookaGame();
 game.Run();
