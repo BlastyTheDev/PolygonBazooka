@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using MonoGame.Extended;
+using MonoGame.Extended.Graphics;
 using PolygonBazooka.Util;
 using Vector2 = System.Numerics.Vector2;
 
@@ -46,6 +48,11 @@ public class Player : DrawableGameComponent
     private readonly Texture2D _yellowShadow;
     private readonly Texture2D _bonusShadow;
 
+    // will be removed soon
+    private readonly Animation2D _clearAnimation;
+
+    private readonly List<Texture2D> _clearAnimationFrames;
+    private int _clearAnimationFrameIndex;
 
     public Player(Game game, bool localPlayer) : base(game)
     {
@@ -62,10 +69,6 @@ public class Player : DrawableGameComponent
             NextFallingBlock();
         }
 
-        _board[0, 0] = TileType.Blue;
-        _board[8, 2] = TileType.Yellow;
-        _board[1, 1] = TileType.Green;
-
         _spriteBatch = new(GraphicsDevice);
 
         _boardTexture = Game.Content.Load<Texture2D>("Textures/board");
@@ -81,6 +84,9 @@ public class Player : DrawableGameComponent
         _redShadow = Game.Content.Load<Texture2D>("Textures/red_shadow");
         _yellowShadow = Game.Content.Load<Texture2D>("Textures/yellow_shadow");
         _bonusShadow = Game.Content.Load<Texture2D>("Textures/bonus_shadow");
+        
+        // debug
+        _clearAnimation = new();
     }
 
     public override void Draw(GameTime gameTime)
@@ -117,10 +123,6 @@ public class Player : DrawableGameComponent
             int shadowY = (int)(RenderPosition.Y + (GetLowestEmptyCell(_xOrigin) + shadowOffset) * (16 * Const.Scale)
                                                  + 4 * Const.Scale);
             RenderTile(_fallingBlockOrigin, shadowX, shadowY, true);
-
-            int tileX = (int)(RenderPosition.X + _xOrigin * (16 * Const.Scale) + 4 * Const.Scale);
-            int tileY = (int)(RenderPosition.Y + _yOrigin * (16 * Const.Scale) + 4 * Const.Scale);
-            RenderTile(_fallingBlockOrigin, tileX, tileY);
         }
 
         if (_fallingBlockOrbit != TileType.Empty)
@@ -134,7 +136,17 @@ public class Player : DrawableGameComponent
             int shadowY = (int)(RenderPosition.Y + (GetLowestEmptyCell(_xOrbit) + shadowOffset) * (16 * Const.Scale)
                                                  + 4 * Const.Scale);
             RenderTile(_fallingBlockOrbit, shadowX, shadowY, true);
+        }
 
+        if (_fallingBlockOrigin != TileType.Empty)
+        {
+            int tileX = (int)(RenderPosition.X + _xOrigin * (16 * Const.Scale) + 4 * Const.Scale);
+            int tileY = (int)(RenderPosition.Y + _yOrigin * (16 * Const.Scale) + 4 * Const.Scale);
+            RenderTile(_fallingBlockOrigin, tileX, tileY);
+        }
+
+        if (_fallingBlockOrbit != TileType.Empty)
+        {
             int tileX = (int)(RenderPosition.X + _xOrbit * (16 * Const.Scale) + 4 * Const.Scale);
             int tileY = (int)(RenderPosition.Y + _yOrbit * (16 * Const.Scale) + 4 * Const.Scale);
             RenderTile(_fallingBlockOrbit, tileX, tileY);
@@ -169,6 +181,8 @@ public class Player : DrawableGameComponent
         }
 
         _spriteBatch.End();
+
+        _clearAnimation.Update(gameTime);
 
         base.Draw(gameTime);
     }
@@ -336,10 +350,36 @@ public class Player : DrawableGameComponent
         if (_yOrigin < _yOrbit && !IsSideways()) originLowestEmptyCell--;
         if (_yOrbit < _yOrigin && !IsSideways()) orbitLowestEmptyCell--;
 
-        if (_yOrigin < originLowestEmptyCell)
+        if (_yOrigin < originLowestEmptyCell && _fallingBlockOrigin != TileType.Empty)
+        {
             _yOrigin += 1;
-        if (_yOrbit < orbitLowestEmptyCell)
+        }
+        else if (_fallingBlockOrigin != TileType.Empty)
+        {
+            DropPiece(true, _yOrigin);
+            _fallingBlockOrigin = TileType.Empty;
+            _xOrigin = _xOrbit;
+        }
+
+        if (_yOrbit < orbitLowestEmptyCell && _fallingBlockOrbit != TileType.Empty)
+        {
             _yOrbit += 1;
+        }
+        else if (_fallingBlockOrbit != TileType.Empty)
+        {
+            DropPiece(false, _yOrbit);
+            _fallingBlockOrbit = TileType.Empty;
+            _xOrbit = _xOrigin;
+        }
+
+        if (_fallingBlockOrigin == TileType.Empty && _fallingBlockOrbit == _fallingBlockOrigin)
+            NextFallingBlock();
+    }
+
+    private void MoveUp()
+    {
+        _yOrigin -= 1;
+        _yOrbit -= 1;
     }
 
     private bool IsCellToLeftNotEmpty()
@@ -433,15 +473,18 @@ public class Player : DrawableGameComponent
 
     public void RotateCw()
     {
+        if (IsSideways() && _xOrigin < _xOrbit && _yOrigin == Const.Rows - 1)
+            MoveUp();
         Rotate(Const.CwRotation);
     }
 
     public void RotateCcw()
     {
+        if (IsSideways() && _xOrbit < _xOrigin && _yOrigin == Const.Rows - 1)
+            MoveUp();
         Rotate(Const.CcwRotation);
     }
 
-    // TODO: Flip currently does not kick when sideways adjacent to the wall when y < 0
     public void Flip()
     {
         if (IsSideways())
