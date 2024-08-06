@@ -7,7 +7,7 @@ using Vector2 = System.Numerics.Vector2;
 
 namespace PolygonBazooka.Elements;
 
-public class Player(Game game) : DrawableGameComponent(game)
+public class Player : DrawableGameComponent
 {
     private readonly TileType[,] _board;
     private TileType[,] _oldBoard;
@@ -29,31 +29,40 @@ public class Player(Game game) : DrawableGameComponent(game)
 
     public Vector2 RenderPosition;
 
-    private SpriteBatch _spriteBatch;
+    private readonly SpriteBatch _spriteBatch;
 
-    private Texture2D _boardTexture;
+    private readonly Texture2D _boardTexture;
 
-    private Texture2D _blueTile;
-    private Texture2D _greenTile;
-    private Texture2D _redTile;
-    private Texture2D _yellowTile;
-    private Texture2D _bonusTile;
-    private Texture2D _garbageTile;
+    private readonly Texture2D _blueTile;
+    private readonly Texture2D _greenTile;
+    private readonly Texture2D _redTile;
+    private readonly Texture2D _yellowTile;
+    private readonly Texture2D _bonusTile;
+    private readonly Texture2D _garbageTile;
 
-    private Texture2D _blueShadow;
-    private Texture2D _greenShadow;
-    private Texture2D _redShadow;
-    private Texture2D _yellowShadow;
-    private Texture2D _bonusShadow;
+    private readonly Texture2D _blueShadow;
+    private readonly Texture2D _greenShadow;
+    private readonly Texture2D _redShadow;
+    private readonly Texture2D _yellowShadow;
+    private readonly Texture2D _bonusShadow;
 
-    public override void Initialize()
+
+    public Player(Game game, bool localPlayer) : base(game)
     {
-        base.Initialize();
-    }
+        _board = new TileType[Const.Rows, Const.Cols];
+        _oldBoard = new TileType[Const.Rows, Const.Cols];
 
-    protected override void LoadContent()
-    {
-        // TODO: this is null, fix it
+        if (localPlayer)
+        {
+            NextFallingBlock();
+            NextFallingBlock();
+            NextFallingBlock();
+        }
+
+        _board[0, 0] = TileType.Blue;
+        _board[8, 2] = TileType.Yellow;
+        _board[1, 1] = TileType.Green;
+
         _spriteBatch = new(GraphicsDevice);
 
         _boardTexture = Game.Content.Load<Texture2D>("Textures/board");
@@ -69,15 +78,42 @@ public class Player(Game game) : DrawableGameComponent(game)
         _redShadow = Game.Content.Load<Texture2D>("Textures/red_shadow");
         _yellowShadow = Game.Content.Load<Texture2D>("Textures/yellow_shadow");
         _bonusShadow = Game.Content.Load<Texture2D>("Textures/bonus_shadow");
-
-        base.LoadContent();
     }
 
     public override void Draw(GameTime gameTime)
     {
-        _spriteBatch.Begin();
+        GraphicsDevice.Clear(Color.Black);
 
-        _spriteBatch.Draw(_boardTexture, RenderPosition, Color.White);
+        _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+
+        // TODO: make the sprites scale based on the window size
+        _spriteBatch.Draw(_boardTexture, new Rectangle((int)RenderPosition.X, (int)RenderPosition.Y,
+            (int)(_boardTexture.Width * Const.Scale), (int)(_boardTexture.Height * Const.Scale)), Color.White);
+
+        for (int row = 0; row < Const.Rows; row++)
+        {
+            for (int col = 0; col < Const.Cols; col++)
+            {
+                Texture2D texture = _board[row, col] switch
+                {
+                    TileType.Blue => _blueTile,
+                    TileType.Green => _greenTile,
+                    TileType.Red => _redTile,
+                    TileType.Yellow => _yellowTile,
+                    TileType.Bonus => _bonusTile,
+                    TileType.Garbage => _garbageTile,
+                    _ => null
+                };
+
+                if (texture != null)
+                {
+                    int x = (int)(RenderPosition.X + col * (16 * Const.Scale) + 4 * Const.Scale);
+                    int y = (int)(RenderPosition.Y + row * (16 * Const.Scale) + 4 * Const.Scale);
+                    _spriteBatch.Draw(texture, new Rectangle(x, y,
+                        (int)(texture.Width * Const.Scale), (int)(texture.Height * Const.Scale)), Color.White);
+                }
+            }
+        }
 
         _spriteBatch.End();
 
@@ -152,7 +188,7 @@ public class Player(Game game) : DrawableGameComponent(game)
         }
     }
 
-    private void MoveLeft()
+    public void MoveLeft()
     {
         // if (IsClearing())
         //     return;
@@ -167,7 +203,7 @@ public class Player(Game game) : DrawableGameComponent(game)
         _xOrbit -= 1;
     }
 
-    private void MoveLeftFully()
+    public void MoveLeftFully()
     {
         while (_xOrigin - 1 >= 0 && _xOrbit - 1 >= 0 && !IsCellToLeftNotEmpty() /* && !IsClearing()*/)
         {
@@ -176,7 +212,7 @@ public class Player(Game game) : DrawableGameComponent(game)
         }
     }
 
-    private void MoveRight()
+    public void MoveRight()
     {
         // if (IsClearing())
         //     return;
@@ -191,7 +227,7 @@ public class Player(Game game) : DrawableGameComponent(game)
         _xOrbit += 1;
     }
 
-    private void MoveRightFully()
+    public void MoveRightFully()
     {
         while (_xOrigin + 1 <= Const.Cols - 1 && _xOrbit + 1 <= Const.Cols - 1 &&
                !IsCellToRightNotEmpty() /* && !IsClearing()*/)

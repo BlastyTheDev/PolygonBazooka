@@ -9,6 +9,8 @@ public class Const
 
     public const int Rows = 12;
     public const int Cols = 7;
+    
+    public const float Scale = 2.5f;
 
     public static readonly TileType[] QueueTileTypes =
     [
