@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using MonoGame.Extended;
 using MonoGame.Extended.Graphics;
 using PolygonBazooka.Util;
 using Vector2 = System.Numerics.Vector2;
@@ -12,7 +11,8 @@ namespace PolygonBazooka.Elements;
 public class Player : DrawableGameComponent
 {
     private readonly TileType[,] _board;
-    private TileType[,] _oldBoard;
+
+    private List<Vector2> _clearingTiles;
 
     private TileType _fallingBlockOrigin;
     private TileType _fallingBlockOrbit;
@@ -48,16 +48,25 @@ public class Player : DrawableGameComponent
     private readonly Texture2D _yellowShadow;
     private readonly Texture2D _bonusShadow;
 
-    // will be removed soon
-    private readonly Animation2D _clearAnimation;
+    private readonly Texture2DAtlas _clearAnimationAtlas;
 
-    private readonly List<Texture2D> _clearAnimationFrames;
-    private int _clearAnimationFrameIndex;
+    // this is able to be an int because any clear animations that exist play at the same time
+    private int _clearAnimationIndex;
+    private double _clearAnimationLastFrameTime;
+
+    private bool _clearAnimationPlaying;
+
+    private const int ClearAnimationFrameTime = 50;
+    private const int ClearAnimationFrames = 8;
+    private const int ClearTime = ClearAnimationFrameTime * ClearAnimationFrames;
+
+    public bool Failed;
 
     public Player(Game game, bool localPlayer) : base(game)
     {
         _board = new TileType[Const.Rows, Const.Cols];
-        _oldBoard = new TileType[Const.Rows, Const.Cols];
+
+        _clearingTiles = new();
 
         _fallingBlockOrigin = TileType.Empty;
         _fallingBlockOrbit = TileType.Empty;
@@ -84,9 +93,17 @@ public class Player : DrawableGameComponent
         _redShadow = Game.Content.Load<Texture2D>("Textures/red_shadow");
         _yellowShadow = Game.Content.Load<Texture2D>("Textures/yellow_shadow");
         _bonusShadow = Game.Content.Load<Texture2D>("Textures/bonus_shadow");
-        
-        // debug
-        _clearAnimation = new();
+
+        Texture2D clearSpriteSheet = Game.Content.Load<Texture2D>("Textures/clear_sprite_sheet");
+        _clearAnimationAtlas = new(clearSpriteSheet);
+        _clearAnimationAtlas.CreateRegion(48 * 0, 0, 48, 48);
+        _clearAnimationAtlas.CreateRegion(48 * 1, 0, 48, 48);
+        _clearAnimationAtlas.CreateRegion(48 * 2, 0, 48, 48);
+        _clearAnimationAtlas.CreateRegion(48 * 3, 0, 48, 48);
+        _clearAnimationAtlas.CreateRegion(48 * 4, 0, 48, 48);
+        _clearAnimationAtlas.CreateRegion(48 * 5, 0, 48, 48);
+        _clearAnimationAtlas.CreateRegion(48 * 6, 0, 48, 48);
+        _clearAnimationAtlas.CreateRegion(48 * 7, 0, 48, 48);
     }
 
     public override void Draw(GameTime gameTime)
@@ -112,7 +129,7 @@ public class Player : DrawableGameComponent
             }
         }
 
-        if (_fallingBlockOrigin != TileType.Empty)
+        if (_fallingBlockOrigin != TileType.Empty && !IsClearing())
         {
             int shadowOffset = 0;
 
@@ -125,7 +142,7 @@ public class Player : DrawableGameComponent
             RenderTile(_fallingBlockOrigin, shadowX, shadowY, true);
         }
 
-        if (_fallingBlockOrbit != TileType.Empty)
+        if (_fallingBlockOrbit != TileType.Empty && !IsClearing())
         {
             int shadowOffset = 0;
 
@@ -180,9 +197,32 @@ public class Player : DrawableGameComponent
             RenderTile(_nextNextBlockOrbit, x, y);
         }
 
+        if (_clearingTiles.Count > 0)
+            _clearAnimationPlaying = true;
+
+        foreach (Vector2 tile in _clearingTiles)
+        {
+            int x = (int)(RenderPosition.X + tile.X * (16 * Const.Scale) - 12 * Const.Scale);
+            int y = (int)(RenderPosition.Y + tile.Y * (16 * Const.Scale) - 12 * Const.Scale);
+            _spriteBatch.Draw(_clearAnimationAtlas.GetRegion(_clearAnimationIndex), new Rectangle(x, y,
+                (int)(48 * Const.Scale), (int)(48 * Const.Scale)), Color.White);
+        }
+
         _spriteBatch.End();
 
-        _clearAnimation.Update(gameTime);
+        _clearAnimationLastFrameTime += gameTime.ElapsedGameTime.TotalMilliseconds;
+
+        if (_clearAnimationLastFrameTime >= ClearAnimationFrameTime && _clearAnimationPlaying)
+        {
+            if (_clearAnimationIndex == ClearAnimationFrames - 1)
+            {
+                _clearAnimationPlaying = false;
+                _clearingTiles.Clear();
+            }
+
+            _clearAnimationIndex = (_clearAnimationIndex + 1) % ClearAnimationFrames;
+            _clearAnimationLastFrameTime = 0;
+        }
 
         base.Draw(gameTime);
     }
@@ -277,11 +317,11 @@ public class Player : DrawableGameComponent
 
     private void DropPiece(bool origin, int destY)
     {
-        // if (destY < 0)
-        // {
-        //     Failed = true;
-        // }
-        if (origin)
+        if (destY < 0)
+        {
+            Failed = true;
+        }
+        else if (origin)
         {
             _board[destY, _xOrigin] = _fallingBlockOrigin;
             _fallingBlockOrigin = TileType.Empty;
@@ -293,10 +333,15 @@ public class Player : DrawableGameComponent
         }
     }
 
+    private bool IsClearing()
+    {
+        return DateTimeOffset.Now.ToUnixTimeMilliseconds() - LastClear < ClearTime;
+    }
+
     public void MoveLeft()
     {
-        // if (IsClearing())
-        //     return;
+        if (IsClearing())
+            return;
 
         if (_xOrigin - 1 < 0 || _xOrbit - 1 < 0)
             return;
@@ -310,7 +355,7 @@ public class Player : DrawableGameComponent
 
     public void MoveLeftFully()
     {
-        while (_xOrigin - 1 >= 0 && _xOrbit - 1 >= 0 && !IsCellToLeftNotEmpty() /* && !IsClearing()*/)
+        while (_xOrigin - 1 >= 0 && _xOrbit - 1 >= 0 && !IsCellToLeftNotEmpty() && !IsClearing())
         {
             _xOrigin -= 1;
             _xOrbit -= 1;
@@ -319,8 +364,8 @@ public class Player : DrawableGameComponent
 
     public void MoveRight()
     {
-        // if (IsClearing())
-        //     return;
+        if (IsClearing())
+            return;
 
         if (_xOrigin + 1 > Const.Cols - 1 || _xOrbit + 1 > Const.Cols - 1)
             return;
@@ -335,7 +380,7 @@ public class Player : DrawableGameComponent
     public void MoveRightFully()
     {
         while (_xOrigin + 1 <= Const.Cols - 1 && _xOrbit + 1 <= Const.Cols - 1 &&
-               !IsCellToRightNotEmpty() /* && !IsClearing()*/)
+               !IsCellToRightNotEmpty() && !IsClearing())
         {
             _xOrigin += 1;
             _xOrbit += 1;
@@ -630,11 +675,18 @@ public class Player : DrawableGameComponent
             }
         }
 
+        if (clearedTiles.Count != 0)
+        {
+            _clearingTiles = new();
+            LastClear = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+        }
+
         // clear tiles and adjacent garbage
         foreach (Vector2 tile in clearedTiles)
         {
             LastClear = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
+            _clearingTiles.Add(tile);
             _board[(int)tile.Y, (int)tile.X] = TileType.Empty;
 
             // if tile below is garbage
