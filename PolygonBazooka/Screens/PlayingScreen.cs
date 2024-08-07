@@ -5,9 +5,11 @@ using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended.Screens;
 using PolygonBazooka.Elements;
 
+// ReSharper disable PossibleLossOfFraction
+
 namespace PolygonBazooka.Screens;
 
-public class PlayingScreen(Game game) : GameScreen(game)
+public class PlayingScreen(PolygonBazookaGame game) : GameScreen(game)
 {
     private SpriteBatch _spriteBatch;
     private Player _localPlayer;
@@ -18,6 +20,9 @@ public class PlayingScreen(Game game) : GameScreen(game)
     private bool _ccwRotatePressed;
     private bool _flipPressed;
     private bool _hardDropPressed;
+
+    private bool _retryPressed;
+    private long _retryPressStart;
 
     private bool _leftDasActive;
     private bool _rightDasActive;
@@ -35,13 +40,17 @@ public class PlayingScreen(Game game) : GameScreen(game)
     public float AutoRepeatRate = 0;
     public float SoftDropRate = 100;
 
+    // render player at the centre of screen and adjust size based on it
+    private int _lastWindowWidth;
+    private int _lastWindowHeight;
+
     public override void LoadContent()
     {
         _spriteBatch = new(Game.GraphicsDevice);
 
-        _localPlayer = new(Game, true)
+        _localPlayer = new(game, true)
         {
-            RenderPosition = new(100, 150),
+            RenderPosition = new(_lastWindowWidth / 2 - 78 * game.Scale, _lastWindowHeight / 2 - 78 * game.Scale),
         };
 
         base.LoadContent();
@@ -53,7 +62,26 @@ public class PlayingScreen(Game game) : GameScreen(game)
 
         if (_localPlayer.Failed)
         {
-            // TODO: implement game over thing
+            game.ChangeGameState(GameState.SoloGameOver);
+
+            if (keyboardState.IsKeyDown(Keys.R))
+            {
+                if (!_retryPressed)
+                    _retryPressStart = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+
+                _retryPressed = true;
+
+                if (DateTimeOffset.Now.ToUnixTimeMilliseconds() - _retryPressStart >= 1000)
+                {
+                    _localPlayer = new(game, true)
+                    {
+                        RenderPosition = new(_lastWindowWidth / 2 - 78 * game.Scale, _lastWindowHeight / 2 - 78 * game.Scale),
+                    };
+                }
+            }
+
+            if (keyboardState.IsKeyUp(Keys.R) && _retryPressed)
+                _retryPressed = false;
         }
         else
         {
@@ -173,13 +201,32 @@ public class PlayingScreen(Game game) : GameScreen(game)
                 _localPlayer.MoveDown();
             }
 
-            _localPlayer.ProcessGravity();
+            if (!_localPlayer.IsClearing())
+                _localPlayer.ProcessGravity();
+
             _localPlayer.Clear();
+        }
+
+        if (_lastWindowHeight != Game.Window.ClientBounds.Height || _lastWindowWidth != Game.Window.ClientBounds.Width)
+        {
+            _lastWindowWidth = Game.Window.ClientBounds.Width;
+            _lastWindowHeight = Game.Window.ClientBounds.Height;
+
+            _localPlayer.RenderPosition = new(_lastWindowWidth / 2 - 78 * game.Scale,
+                _lastWindowHeight / 2 - 78 * game.Scale);
         }
     }
 
     public override void Draw(GameTime gameTime)
     {
         _localPlayer.Draw(gameTime);
+
+        if (_localPlayer.Failed)
+        {
+            _spriteBatch.Begin();
+            _spriteBatch.DrawString(Game.Content.Load<SpriteFont>("Fonts/GameOver"), "Game Over. Hold R to retry",
+                new(50, 50), Color.Red);
+            _spriteBatch.End();
+        }
     }
 }

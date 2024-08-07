@@ -10,14 +10,23 @@ namespace PolygonBazooka
     {
         MainMenu,
         Playing,
+        SoloGameOver,
     }
-    
+
     public class PolygonBazookaGame : Game
     {
         private readonly ScreenManager _screenManager = new();
         private readonly Dictionary<ScreenName, GameScreen> _screens = new();
 
         public readonly DiscordRichPresence DiscordRpc = new();
+
+        // playing for now, until a menu is created
+        public GameState State { get; private set; } = GameState.Playing;
+
+        public float Scale { get; private set; } = 1;
+
+        private int _lastWindowWidth;
+        private int _lastWindowHeight;
 
         public PolygonBazookaGame()
         {
@@ -42,10 +51,11 @@ namespace PolygonBazooka
 
             base.Initialize();
         }
-    
+
         public void ChangeGameState(GameState newState)
         {
-            // TODO: implement
+            State = newState;
+            DiscordRpc.UpdateStatus(newState);
         }
 
         protected override void LoadContent()
@@ -64,6 +74,13 @@ namespace PolygonBazooka
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed ||
                 Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
+
+            if (_lastWindowWidth != Window.ClientBounds.Width || _lastWindowHeight != Window.ClientBounds.Height)
+            {
+                Scale = (float)Window.ClientBounds.Height / 300;
+                _lastWindowWidth = Window.ClientBounds.Width;
+                _lastWindowHeight = Window.ClientBounds.Height;
+            }
 
             base.Update(gameTime);
         }

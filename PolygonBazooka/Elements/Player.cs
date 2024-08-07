@@ -62,8 +62,12 @@ public class Player : DrawableGameComponent
 
     public bool Failed;
 
-    public Player(Game game, bool localPlayer) : base(game)
+    private readonly PolygonBazookaGame _game;
+
+    public Player(PolygonBazookaGame game, bool localPlayer) : base(game)
     {
+        _game = game;
+
         _board = new TileType[Const.Rows, Const.Cols];
 
         _clearingTiles = new();
@@ -114,7 +118,7 @@ public class Player : DrawableGameComponent
 
         // TODO: make the sprites scale based on the window size
         _spriteBatch.Draw(_boardTexture, new Rectangle((int)RenderPosition.X, (int)RenderPosition.Y,
-            (int)(_boardTexture.Width * Const.Scale), (int)(_boardTexture.Height * Const.Scale)), Color.White);
+            (int)(_boardTexture.Width * _game.Scale), (int)(_boardTexture.Height * _game.Scale)), Color.White);
 
         for (int row = 0; row < Const.Rows; row++)
         {
@@ -123,8 +127,8 @@ public class Player : DrawableGameComponent
                 if (_board[row, col] == TileType.Empty)
                     continue;
 
-                int x = (int)(RenderPosition.X + col * (16 * Const.Scale) + 4 * Const.Scale);
-                int y = (int)(RenderPosition.Y + row * (16 * Const.Scale) + 4 * Const.Scale);
+                int x = (int)(RenderPosition.X + col * (16 * _game.Scale) + 4 * _game.Scale);
+                int y = (int)(RenderPosition.Y + row * (16 * _game.Scale) + 4 * _game.Scale);
                 RenderTile(_board[row, col], x, y);
             }
         }
@@ -136,9 +140,9 @@ public class Player : DrawableGameComponent
             if (_yOrigin < _yOrbit)
                 shadowOffset = -1;
 
-            int shadowX = (int)(RenderPosition.X + _xOrigin * (16 * Const.Scale) + 4 * Const.Scale);
-            int shadowY = (int)(RenderPosition.Y + (GetLowestEmptyCell(_xOrigin) + shadowOffset) * (16 * Const.Scale)
-                                                 + 4 * Const.Scale);
+            int shadowX = (int)(RenderPosition.X + _xOrigin * (16 * _game.Scale) + 4 * _game.Scale);
+            int shadowY = (int)(RenderPosition.Y + (GetLowestEmptyCell(_xOrigin) + shadowOffset) * (16 * _game.Scale)
+                                                 + 4 * _game.Scale);
             RenderTile(_fallingBlockOrigin, shadowX, shadowY, true);
         }
 
@@ -149,51 +153,51 @@ public class Player : DrawableGameComponent
             if (_yOrigin > _yOrbit)
                 shadowOffset = -1;
 
-            int shadowX = (int)(RenderPosition.X + _xOrbit * (16 * Const.Scale) + 4 * Const.Scale);
-            int shadowY = (int)(RenderPosition.Y + (GetLowestEmptyCell(_xOrbit) + shadowOffset) * (16 * Const.Scale)
-                                                 + 4 * Const.Scale);
+            int shadowX = (int)(RenderPosition.X + _xOrbit * (16 * _game.Scale) + 4 * _game.Scale);
+            int shadowY = (int)(RenderPosition.Y + (GetLowestEmptyCell(_xOrbit) + shadowOffset) * (16 * _game.Scale)
+                                                 + 4 * _game.Scale);
             RenderTile(_fallingBlockOrbit, shadowX, shadowY, true);
         }
 
         if (_fallingBlockOrigin != TileType.Empty)
         {
-            int tileX = (int)(RenderPosition.X + _xOrigin * (16 * Const.Scale) + 4 * Const.Scale);
-            int tileY = (int)(RenderPosition.Y + _yOrigin * (16 * Const.Scale) + 4 * Const.Scale);
+            int tileX = (int)(RenderPosition.X + _xOrigin * (16 * _game.Scale) + 4 * _game.Scale);
+            int tileY = (int)(RenderPosition.Y + _yOrigin * (16 * _game.Scale) + 4 * _game.Scale);
             RenderTile(_fallingBlockOrigin, tileX, tileY);
         }
 
         if (_fallingBlockOrbit != TileType.Empty)
         {
-            int tileX = (int)(RenderPosition.X + _xOrbit * (16 * Const.Scale) + 4 * Const.Scale);
-            int tileY = (int)(RenderPosition.Y + _yOrbit * (16 * Const.Scale) + 4 * Const.Scale);
+            int tileX = (int)(RenderPosition.X + _xOrbit * (16 * _game.Scale) + 4 * _game.Scale);
+            int tileY = (int)(RenderPosition.Y + _yOrbit * (16 * _game.Scale) + 4 * _game.Scale);
             RenderTile(_fallingBlockOrbit, tileX, tileY);
         }
 
         if (_nextBlockOrigin != TileType.Empty)
         {
-            int x = (int)(RenderPosition.X + 7 * (16 * Const.Scale) + 8 * Const.Scale);
-            int y = (int)(RenderPosition.Y + 0 * (16 * Const.Scale) + 14 * Const.Scale);
+            int x = (int)(RenderPosition.X + 7 * (16 * _game.Scale) + 8 * _game.Scale);
+            int y = (int)(RenderPosition.Y + 0 * (16 * _game.Scale) + 14 * _game.Scale);
             RenderTile(_nextBlockOrigin, x, y);
         }
 
         if (_nextBlockOrbit != TileType.Empty)
         {
-            int x = (int)(RenderPosition.X + 7 * (16 * Const.Scale) + 8 * Const.Scale);
-            int y = (int)(RenderPosition.Y + 1 * (16 * Const.Scale) + 14 * Const.Scale);
+            int x = (int)(RenderPosition.X + 7 * (16 * _game.Scale) + 8 * _game.Scale);
+            int y = (int)(RenderPosition.Y + 1 * (16 * _game.Scale) + 14 * _game.Scale);
             RenderTile(_nextBlockOrbit, x, y);
         }
 
         if (_nextNextBlockOrigin != TileType.Empty)
         {
-            int x = (int)(RenderPosition.X + 7 * (16 * Const.Scale) + 8 * Const.Scale);
-            int y = (int)(RenderPosition.Y + 2 * (16 * Const.Scale) + 18 * Const.Scale);
+            int x = (int)(RenderPosition.X + 7 * (16 * _game.Scale) + 8 * _game.Scale);
+            int y = (int)(RenderPosition.Y + 2 * (16 * _game.Scale) + 18 * _game.Scale);
             RenderTile(_nextNextBlockOrigin, x, y);
         }
 
         if (_nextNextBlockOrbit != TileType.Empty)
         {
-            int x = (int)(RenderPosition.X + 7 * (16 * Const.Scale) + 8 * Const.Scale);
-            int y = (int)(RenderPosition.Y + 3 * (16 * Const.Scale) + 18 * Const.Scale);
+            int x = (int)(RenderPosition.X + 7 * (16 * _game.Scale) + 8 * _game.Scale);
+            int y = (int)(RenderPosition.Y + 3 * (16 * _game.Scale) + 18 * _game.Scale);
             RenderTile(_nextNextBlockOrbit, x, y);
         }
 
@@ -202,10 +206,10 @@ public class Player : DrawableGameComponent
 
         foreach (Vector2 tile in _clearingTiles)
         {
-            int x = (int)(RenderPosition.X + tile.X * (16 * Const.Scale) - 12 * Const.Scale);
-            int y = (int)(RenderPosition.Y + tile.Y * (16 * Const.Scale) - 12 * Const.Scale);
+            int x = (int)(RenderPosition.X + tile.X * (16 * _game.Scale) - 12 * _game.Scale);
+            int y = (int)(RenderPosition.Y + tile.Y * (16 * _game.Scale) - 12 * _game.Scale);
             _spriteBatch.Draw(_clearAnimationAtlas.GetRegion(_clearAnimationIndex), new Rectangle(x, y,
-                (int)(48 * Const.Scale), (int)(48 * Const.Scale)), Color.White);
+                (int)(48 * _game.Scale), (int)(48 * _game.Scale)), Color.White);
         }
 
         _spriteBatch.End();
@@ -234,7 +238,7 @@ public class Player : DrawableGameComponent
         if (texture != null)
         {
             _spriteBatch.Draw(texture, new Rectangle(x, y,
-                (int)(texture.Width * Const.Scale), (int)(texture.Height * Const.Scale)), Color.White);
+                (int)(texture.Width * _game.Scale), (int)(texture.Height * _game.Scale)), Color.White);
         }
     }
 
@@ -267,6 +271,9 @@ public class Player : DrawableGameComponent
 
     public void HardDrop()
     {
+        if (IsClearing())
+            return;
+
         // drop origin first if lower
         // they are flipped and i have no idea why but it works so..
         if (_yOrigin <= _yOrbit)
@@ -333,7 +340,7 @@ public class Player : DrawableGameComponent
         }
     }
 
-    private bool IsClearing()
+    public bool IsClearing()
     {
         return DateTimeOffset.Now.ToUnixTimeMilliseconds() - LastClear < ClearTime;
     }
@@ -389,6 +396,9 @@ public class Player : DrawableGameComponent
 
     public void MoveDown()
     {
+        if (IsClearing())
+            return;
+
         int originLowestEmptyCell = GetLowestEmptyCell(_xOrigin);
         int orbitLowestEmptyCell = GetLowestEmptyCell(_xOrbit);
 

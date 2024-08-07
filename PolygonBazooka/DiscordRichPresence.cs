@@ -1,3 +1,4 @@
+using System;
 using DiscordRPC;
 using DiscordRPC.Message;
 
@@ -40,9 +41,8 @@ public class DiscordRichPresence
 
         _client.SetPresence(_presence);
     }
-    
-    // TODO: Implement UpdateStatus method
-    public void UpdateStatus()
+
+    public void UpdateStatus(GameState state)
     {
         if (_client == null)
             return;
@@ -52,5 +52,26 @@ public class DiscordRichPresence
 
         if (_client.CurrentPresence == null)
             return;
+
+        switch (state)
+        {
+            case GameState.MainMenu:
+                _client.UpdateDetails("In the Menu");
+                _client.UpdateState("Existing");
+                break;
+
+            case GameState.Playing:
+                _client.UpdateDetails("Stacking blocks");
+                _client.UpdateState("Playing Solo");
+                break;
+
+            case GameState.SoloGameOver:
+                _client.UpdateDetails("Topped out");
+                _client.UpdateState("Game Over");
+                break;
+
+            default:
+                throw new ArgumentOutOfRangeException(nameof(state), state, null);
+        }
     }
 }
