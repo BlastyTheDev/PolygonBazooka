@@ -116,7 +116,6 @@ public class Player : DrawableGameComponent
 
         _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
-        // TODO: make the sprites scale based on the window size
         _spriteBatch.Draw(_boardTexture, new Rectangle((int)RenderPosition.X, (int)RenderPosition.Y,
             (int)(_boardTexture.Width * _game.Scale), (int)(_boardTexture.Height * _game.Scale)), Color.White);
 

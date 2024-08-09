@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended.Screens;
@@ -20,8 +21,7 @@ namespace PolygonBazooka
 
         public readonly DiscordRichPresence DiscordRpc = new();
 
-        // playing for now, until a menu is created
-        public GameState State { get; private set; } = GameState.Playing;
+        public GameState State { get; private set; } = GameState.MainMenu;
 
         public float Scale { get; private set; } = 1;
 
@@ -56,12 +56,23 @@ namespace PolygonBazooka
         {
             State = newState;
             DiscordRpc.UpdateStatus(newState);
+
+            switch (newState)
+            {
+                case GameState.MainMenu:
+                    LoadScreen(ScreenName.MainMenu);
+                    break;
+                case GameState.Playing:
+                    LoadScreen(ScreenName.Playing);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(newState), newState, null);
+            }
         }
 
         protected override void LoadContent()
         {
-            // playing screen for now
-            LoadScreen(ScreenName.Playing);
+            LoadScreen(ScreenName.MainMenu);
         }
 
         private void LoadScreen(ScreenName screen)

@@ -12,8 +12,8 @@ public class DiscordRichPresence
 
     private readonly RichPresence _presence = new()
     {
-        State = "Playing Solo",
-        Details = "Stacking blocks",
+        State = "Existing",
+        Details = "In the Menu",
         Timestamps = Timestamps.Now,
         Assets = new Assets
         {

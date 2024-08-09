@@ -14,6 +14,9 @@ public class PlayingScreen(PolygonBazookaGame game) : GameScreen(game)
     private SpriteBatch _spriteBatch;
     private Player _localPlayer;
 
+    private bool _failTrigger;
+    private long _failTime;
+
     private bool _leftPressed;
     private bool _rightPressed;
     private bool _cwRotatePressed;
@@ -62,26 +65,36 @@ public class PlayingScreen(PolygonBazookaGame game) : GameScreen(game)
 
         if (_localPlayer.Failed)
         {
-            game.ChangeGameState(GameState.SoloGameOver);
-
-            if (keyboardState.IsKeyDown(Keys.R))
+            if (!_failTrigger)
             {
-                if (!_retryPressed)
-                    _retryPressStart = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-
-                _retryPressed = true;
-
-                if (DateTimeOffset.Now.ToUnixTimeMilliseconds() - _retryPressStart >= 1000)
-                {
-                    _localPlayer = new(game, true)
-                    {
-                        RenderPosition = new(_lastWindowWidth / 2 - 78 * game.Scale, _lastWindowHeight / 2 - 78 * game.Scale),
-                    };
-                }
+                _failTrigger = true;
+                _failTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
             }
 
-            if (keyboardState.IsKeyUp(Keys.R) && _retryPressed)
-                _retryPressed = false;
+            if (_failTrigger && DateTimeOffset.Now.ToUnixTimeMilliseconds() - _failTime >= 3000)
+            {
+                game.ChangeGameState(GameState.MainMenu);
+                _failTrigger = false;
+            }
+
+            // if (keyboardState.IsKeyDown(Keys.R))
+            // {
+            //     if (!_retryPressed)
+            //         _retryPressStart = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+            //
+            //     _retryPressed = true;
+            //
+            //     if (DateTimeOffset.Now.ToUnixTimeMilliseconds() - _retryPressStart >= 1000)
+            //     {
+            //         _localPlayer = new(game, true)
+            //         {
+            //             RenderPosition = new(_lastWindowWidth / 2 - 78 * game.Scale, _lastWindowHeight / 2 - 78 * game.Scale),
+            //         };
+            //     }
+            // }
+            //
+            // if (keyboardState.IsKeyUp(Keys.R) && _retryPressed)
+            //     _retryPressed = false;
         }
         else
         {
@@ -224,7 +237,7 @@ public class PlayingScreen(PolygonBazookaGame game) : GameScreen(game)
         if (_localPlayer.Failed)
         {
             _spriteBatch.Begin();
-            _spriteBatch.DrawString(Game.Content.Load<SpriteFont>("Fonts/GameOver"), "Game Over. Hold R to retry",
+            _spriteBatch.DrawString(Game.Content.Load<SpriteFont>("Fonts/GameOver"), "Game Over. Returning to menu...",
                 new(50, 50), Color.Red);
             _spriteBatch.End();
         }
