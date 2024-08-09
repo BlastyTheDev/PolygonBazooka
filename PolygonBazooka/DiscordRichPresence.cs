@@ -14,7 +14,7 @@ public class DiscordRichPresence
     {
         State = "Existing",
         Details = "In the Menu",
-        Timestamps = Timestamps.Now,
+        // Timestamps = Timestamps.Now,
         Assets = new Assets
         {
             LargeImageKey = "greentile",
@@ -53,21 +53,43 @@ public class DiscordRichPresence
         if (_client.CurrentPresence == null)
             return;
 
+        // TODO: changing start time isnt working properly
         switch (state)
         {
             case GameState.MainMenu:
                 _client.UpdateDetails("In the Menu");
                 _client.UpdateState("Existing");
+                _client.UpdateClearTime();
                 break;
 
-            case GameState.Playing:
+            case GameState.SoloPlaying:
                 _client.UpdateDetails("Stacking blocks");
                 _client.UpdateState("Playing Solo");
+                _client.UpdateClearTime();
+                _client.UpdateStartTime(DateTime.Now);
                 break;
 
             case GameState.SoloGameOver:
                 _client.UpdateDetails("Topped out");
                 _client.UpdateState("Game Over");
+                _client.UpdateClearTime();
+                break;
+
+            case GameState.RankedQueuing:
+                _client.UpdateDetails("Playing Ranked");
+                _client.UpdateState("In Queue");
+                _client.UpdateClearTime();
+                _client.UpdateStartTime(DateTime.Now);
+                break;
+
+            // TODO: set statuses for ranked
+            case GameState.RankedGameStart:
+                break;
+
+            case GameState.RankedPlaying:
+                break;
+
+            case GameState.RankedGameOver:
                 break;
 
             default:

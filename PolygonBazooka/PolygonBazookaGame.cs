@@ -10,8 +10,12 @@ namespace PolygonBazooka
     public enum GameState
     {
         MainMenu,
-        Playing,
+        SoloPlaying,
         SoloGameOver,
+        RankedQueuing,
+        RankedGameStart,
+        RankedPlaying,
+        RankedGameOver,
     }
 
     public class PolygonBazookaGame : Game
@@ -62,7 +66,7 @@ namespace PolygonBazooka
                 case GameState.MainMenu:
                     LoadScreen(ScreenName.MainMenu);
                     break;
-                case GameState.Playing:
+                case GameState.SoloPlaying:
                     LoadScreen(ScreenName.Playing);
                     break;
                 default:
