@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -5,11 +6,21 @@ using MonoGame.Extended.Screens;
 
 namespace PolygonBazooka.Screens;
 
+public enum Menus
+{
+    MainMenu,
+    MultiplayerMenu,
+    RankedMenu,
+    ConfigMenu,
+}
+
 public class MainMenuScreen : GameScreen
 {
     private readonly SpriteBatch _spriteBatch;
 
     private readonly PolygonBazookaGame _game;
+
+    private Menus _currentMenu = Menus.MainMenu;
 
     private const int ButtonYGap = 10;
     private const int ButtonYOffset = 40;
@@ -45,14 +56,23 @@ public class MainMenuScreen : GameScreen
     private bool _rankedButtonPressed;
 
     // other non main buttons/elements
-    // TODO: implement these
     private readonly Texture2D _switchAccountButton;
     private readonly Texture2D _switchAccountButtonHover;
     private Rectangle _switchAccountButtonBounds;
     private bool _switchAccountButtonHovered;
+    private bool _switchAccountButtonPressed;
 
     private readonly Texture2D _accountIndicator;
     private Rectangle _accountIndicatorBounds;
+
+    private readonly Texture2D _sliderTab;
+    private readonly Texture2D _sliderTabHover;
+    private Rectangle _sliderTabBounds;
+    private bool _sliderTabHovered;
+    private bool _sliderTabPressed;
+
+    private readonly Texture2D _sliderGuide;
+    private Rectangle _sliderGuideBounds;
 
     private int _lastWindowWidth;
     private int _lastWindowHeight;
@@ -82,19 +102,22 @@ public class MainMenuScreen : GameScreen
         _switchAccountButton = Game.Content.Load<Texture2D>("Textures/ui/switch_account_button");
         _switchAccountButtonHover = Game.Content.Load<Texture2D>("Textures/ui/switch_account_button_hover");
 
+        _sliderTab = Game.Content.Load<Texture2D>("Textures/ui/config_slider_tab");
+        _sliderTabHover = Game.Content.Load<Texture2D>("Textures/ui/config_slider_tab_hover");
+
+        _sliderGuide = Game.Content.Load<Texture2D>("Textures/ui/config_slider_guide");
+
         _accountIndicator = Game.Content.Load<Texture2D>("Textures/ui/you_are_logged_in_as");
     }
 
-    public override void Update(GameTime gameTime)
+    private void UpdateMainMenu(GameTime gameTime, MouseState mouseState, Rectangle mousePosition)
     {
-        var mouseState = Mouse.GetState();
-
         // Singleplayer Button
-        if (_singleplayerButtonBounds.Intersects(new Rectangle(mouseState.X, mouseState.Y, 0, 0)))
+        if (_singleplayerButtonBounds.Intersects(mousePosition))
         {
             _singleplayerButtonHovered = true;
 
-            if (mouseState.LeftButton == ButtonState.Pressed)
+            if (mouseState.LeftButton == ButtonState.Pressed && !_multiplayerButtonPressed && !_configButtonPressed)
             {
                 _singleplayerButtonPressed = true;
             }
@@ -115,11 +138,11 @@ public class MainMenuScreen : GameScreen
         }
 
         // Multiplayer Button
-        if (_multiplayerButtonBounds.Intersects(new Rectangle(mouseState.X, mouseState.Y, 0, 0)))
+        if (_multiplayerButtonBounds.Intersects(mousePosition))
         {
             _multiplayerButtonHovered = true;
 
-            if (mouseState.LeftButton == ButtonState.Pressed)
+            if (mouseState.LeftButton == ButtonState.Pressed && !_singleplayerButtonPressed & !_configButtonPressed)
             {
                 _multiplayerButtonPressed = true;
             }
@@ -135,16 +158,17 @@ public class MainMenuScreen : GameScreen
 
             if (_multiplayerButtonHovered)
             {
-                // multiplayer menu
+                _currentMenu = Menus.MultiplayerMenu;
             }
         }
 
         // Config Button
-        if (_configButtonBounds.Intersects(new Rectangle(mouseState.X, mouseState.Y, 0, 0)))
+        if (_configButtonBounds.Intersects(mousePosition))
         {
             _configButtonHovered = true;
 
-            if (mouseState.LeftButton == ButtonState.Pressed)
+            if (mouseState.LeftButton == ButtonState.Pressed && !_singleplayerButtonPressed &&
+                !_multiplayerButtonPressed)
             {
                 _configButtonPressed = true;
             }
@@ -160,17 +184,97 @@ public class MainMenuScreen : GameScreen
 
             if (_configButtonHovered)
             {
-                // TODO: make a config menu
+                _currentMenu = Menus.ConfigMenu;
             }
         }
     }
 
-    public override void Draw(GameTime gameTime)
+    private void UpdateMultiplayerMenu(GameTime gameTime, MouseState mouseState, Rectangle mousePosition)
     {
-        GraphicsDevice.Clear(Color.Black);
+        if (_rankedButtonBounds.Intersects(mousePosition))
+        {
+            _rankedButtonHovered = true;
 
-        _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+            if (mouseState.LeftButton == ButtonState.Pressed)
+            {
+                _rankedButtonPressed = true;
+            }
+        }
+        else
+        {
+            _rankedButtonHovered = false;
+        }
 
+        if (mouseState.LeftButton == ButtonState.Released && _rankedButtonPressed)
+        {
+            _rankedButtonPressed = false;
+
+            if (_rankedButtonHovered)
+            {
+                _currentMenu = Menus.RankedMenu;
+            }
+        }
+    }
+
+    private void UpdateRankedMenu(GameTime gameTime, MouseState mouseState, Rectangle mousePosition)
+    {
+    }
+
+    private void UpdateConfigMenu(GameTime gameTime, MouseState mouseState, Rectangle mousePosition)
+    {
+    }
+
+    public override void Update(GameTime gameTime)
+    {
+        var mouseState = Mouse.GetState();
+        Rectangle mousePosition = new(mouseState.X, mouseState.Y, 0, 0);
+
+        // Switch Account Button
+        if (_switchAccountButtonBounds.Intersects(mousePosition))
+        {
+            _switchAccountButtonHovered = true;
+
+            if (mouseState.LeftButton == ButtonState.Pressed)
+            {
+                _switchAccountButtonPressed = true;
+            }
+        }
+        else
+        {
+            _switchAccountButtonHovered = false;
+        }
+
+        if (mouseState.LeftButton == ButtonState.Released && _switchAccountButtonPressed)
+        {
+            _switchAccountButtonPressed = false;
+
+            if (_switchAccountButtonHovered)
+            {
+            }
+        }
+
+        switch (_currentMenu)
+        {
+            case Menus.MainMenu:
+                UpdateMainMenu(gameTime, mouseState, mousePosition);
+                break;
+
+            case Menus.MultiplayerMenu:
+                UpdateMultiplayerMenu(gameTime, mouseState, mousePosition);
+                break;
+
+            case Menus.RankedMenu:
+                UpdateRankedMenu(gameTime, mouseState, mousePosition);
+                break;
+
+            case Menus.ConfigMenu:
+                UpdateConfigMenu(gameTime, mouseState, mousePosition);
+                break;
+        }
+    }
+
+    private void DrawMainMenu(GameTime gameTime)
+    {
         // Singleplayer button
         if (_singleplayerButtonHovered && !_singleplayerButtonPressed)
             _spriteBatch.Draw(_singleplayerButtonHover, _singleplayerButtonBounds, Color.White);
@@ -191,9 +295,63 @@ public class MainMenuScreen : GameScreen
         else if (_configButtonPressed)
             _spriteBatch.Draw(_configButtonPress, _configButtonBounds, Color.White);
         else _spriteBatch.Draw(_configButton, _configButtonBounds, Color.White);
+    }
+
+    private void DrawMultiplayerMenu(GameTime gameTime)
+    {
+        // Ranked button
+        if (_rankedButtonHovered && !_rankedButtonPressed)
+            _spriteBatch.Draw(_rankedButtonHover, _rankedButtonBounds, Color.White);
+        else if (_rankedButtonPressed)
+            _spriteBatch.Draw(_rankedButtonPress, _rankedButtonBounds, Color.White);
+        else _spriteBatch.Draw(_rankedButton, _rankedButtonBounds, Color.White);
+    }
+
+    private void DrawRankedMenu(GameTime gameTime)
+    {
+    }
+
+    private void DrawConfigMenu(GameTime gameTime)
+    {
+        _spriteBatch.Draw(_sliderGuide, _sliderGuideBounds, Color.White);
+    }
+
+    public override void Draw(GameTime gameTime)
+    {
+        GraphicsDevice.Clear(Color.Black);
+
+        _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+
+        // Account indicator
+        _spriteBatch.Draw(_accountIndicator, _accountIndicatorBounds, Color.White);
+
+        // Switch account button
+        _spriteBatch.Draw(_switchAccountButtonHovered ? _switchAccountButtonHover : _switchAccountButton,
+            _switchAccountButtonBounds, Color.White);
+
+        switch (_currentMenu)
+        {
+            case Menus.MainMenu:
+                DrawMainMenu(gameTime);
+                break;
+
+            case Menus.MultiplayerMenu:
+                DrawMultiplayerMenu(gameTime);
+                break;
+
+            case Menus.RankedMenu:
+                DrawRankedMenu(gameTime);
+                break;
+
+            case Menus.ConfigMenu:
+                DrawConfigMenu(gameTime);
+                break;
+        }
+
 
         _spriteBatch.End();
 
+        // TODO: update these separately
         if (_lastWindowHeight != Game.Window.ClientBounds.Height || _lastWindowWidth != Game.Window.ClientBounds.Width)
         {
             _lastWindowWidth = Game.Window.ClientBounds.Width;
@@ -215,6 +373,30 @@ public class MainMenuScreen : GameScreen
                 _lastWindowWidth / 2 - (int)(_singleplayerButton.Width * _game.Scale) / 2,
                 _lastWindowHeight / 2 + (int)(3 * ButtonYGap * _game.Scale + ButtonYOffset * _game.Scale),
                 (int)(_singleplayerButton.Width * _game.Scale), (int)(_singleplayerButton.Height * _game.Scale));
+
+            _accountIndicatorBounds = new Rectangle(
+                _lastWindowWidth / 2 - (int)(_accountIndicator.Width * _game.Scale) / 2,
+                (int)(_accountIndicator.Height * _game.Scale),
+                (int)(_accountIndicator.Width * _game.Scale), (int)(_accountIndicator.Height * _game.Scale));
+
+            _switchAccountButtonBounds = new Rectangle(
+                _lastWindowWidth / 2 - (int)(_switchAccountButton.Width * _game.Scale) / 2,
+                (int)(_accountIndicator.Height * _game.Scale + 50 * _game.Scale),
+                (int)(_switchAccountButton.Width * _game.Scale), (int)(_switchAccountButton.Height * _game.Scale));
+
+            // ranked button in same position as singleplayer button, subject to change
+            _rankedButtonBounds = _singleplayerButtonBounds;
+
+            _sliderTabBounds = new Rectangle(
+                _lastWindowWidth / 2 - (int)(_sliderTab.Width * _game.Scale) / 2,
+                _lastWindowHeight / 2 - (int)(_sliderTab.Height * _game.Scale) / 2,
+                (int)(_sliderTab.Width * _game.Scale), (int)(_sliderTab.Height * _game.Scale));
+
+            // TODO: needs fixing
+            _sliderGuideBounds = new Rectangle(
+                _lastWindowWidth / 2 - (int)(_sliderTab.Width * _game.Scale),
+                _lastWindowHeight / 2 - (int)(_sliderTab.Height * _game.Scale) / 2,
+                (int)(_sliderGuide.Width * _game.Scale), (int)(_sliderGuide.Height * _game.Scale));
         }
     }
 }
