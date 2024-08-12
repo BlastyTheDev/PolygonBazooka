@@ -20,6 +20,13 @@
 /processorParam:TextureFormat=Compressed
 /build:Fonts/GameOver.spritefont
 
+#begin Fonts/Tiny5.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:Fonts/Tiny5.spritefont
+
 #begin Textures/blue_shadow.png
 /importer:TextureImporter
 /processor:TextureProcessor

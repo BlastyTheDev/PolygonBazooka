@@ -39,10 +39,6 @@ public class PlayingScreen(PolygonBazookaGame game) : GameScreen(game)
 
     private long _lastFallingBlockGravityTick = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
-    public float DelayedAutoShift = 127;
-    public float AutoRepeatRate = 0;
-    public float SoftDropRate = 100;
-
     // render player at the centre of screen and adjust size based on it
     private int _lastWindowWidth;
     private int _lastWindowHeight;
@@ -79,27 +75,27 @@ public class PlayingScreen(PolygonBazookaGame game) : GameScreen(game)
         }
         else
         {
-            if (keyboardState.IsKeyDown(Keys.A) && !_leftPressed)
+            if (keyboardState.IsKeyDown(game.Preferences.LeftKey) && !_leftPressed)
             {
                 _leftPressed = true;
                 _leftPressStart = DateTimeOffset.Now.ToUnixTimeMilliseconds();
                 _localPlayer.MoveLeft();
             }
 
-            if (keyboardState.IsKeyUp(Keys.A) && _leftPressed)
+            if (keyboardState.IsKeyUp(game.Preferences.LeftKey) && _leftPressed)
             {
                 _leftPressed = false;
                 _leftDasActive = false;
             }
 
-            if (keyboardState.IsKeyDown(Keys.D) && !_rightPressed)
+            if (keyboardState.IsKeyDown(game.Preferences.RightKey) && !_rightPressed)
             {
                 _rightPressed = true;
                 _rightPressStart = DateTimeOffset.Now.ToUnixTimeMilliseconds();
                 _localPlayer.MoveRight();
             }
 
-            if (keyboardState.IsKeyUp(Keys.D) && _rightPressed)
+            if (keyboardState.IsKeyUp(game.Preferences.RightKey) && _rightPressed)
             {
                 _rightPressed = false;
                 _rightDasActive = false;
@@ -109,16 +105,18 @@ public class PlayingScreen(PolygonBazookaGame game) : GameScreen(game)
             if (!_leftPressed)
                 _leftDasActive = false;
 
-            if (DateTimeOffset.Now.ToUnixTimeMilliseconds() - _leftPressStart >= DelayedAutoShift && _leftPressed
+            if (DateTimeOffset.Now.ToUnixTimeMilliseconds() - _leftPressStart >= game.Preferences.DelayedAutoShift &&
+                _leftPressed
                 && !_leftDasActive)
                 _leftDasActive = true;
 
             if (_leftDasActive && _leftPressed
-                               && DateTimeOffset.Now.ToUnixTimeMilliseconds() - _lastLeftAutoRepeat >= AutoRepeatRate)
+                               && DateTimeOffset.Now.ToUnixTimeMilliseconds() - _lastLeftAutoRepeat >=
+                               game.Preferences.AutoRepeatRate)
             {
                 _lastLeftAutoRepeat = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
-                if (AutoRepeatRate == 0)
+                if (game.Preferences.AutoRepeatRate == 0)
                     _localPlayer.MoveLeftFully();
                 else
                     _localPlayer.MoveLeft();
@@ -127,65 +125,67 @@ public class PlayingScreen(PolygonBazookaGame game) : GameScreen(game)
             if (!_rightPressed)
                 _rightDasActive = false;
 
-            if (DateTimeOffset.Now.ToUnixTimeMilliseconds() - _rightPressStart >= DelayedAutoShift && _rightPressed
+            if (DateTimeOffset.Now.ToUnixTimeMilliseconds() - _rightPressStart >= game.Preferences.DelayedAutoShift &&
+                _rightPressed
                 && !_rightDasActive)
                 _rightDasActive = true;
 
             if (_rightDasActive && _rightPressed
-                                && DateTimeOffset.Now.ToUnixTimeMilliseconds() - _lastRightAutoRepeat >= AutoRepeatRate)
+                                && DateTimeOffset.Now.ToUnixTimeMilliseconds() - _lastRightAutoRepeat >=
+                                game.Preferences.AutoRepeatRate)
             {
                 _lastRightAutoRepeat = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
-                if (AutoRepeatRate == 0)
+                if (game.Preferences.AutoRepeatRate == 0)
                     _localPlayer.MoveRightFully();
                 else
                     _localPlayer.MoveRight();
             }
             // DAS End ----------------------------------------------------------
 
-            if (keyboardState.IsKeyDown(Keys.S))
+            if (keyboardState.IsKeyDown(game.Preferences.SoftDropKey))
             {
-                if (DateTimeOffset.Now.ToUnixTimeMilliseconds() - _lastDownAutoRepeat >= SoftDropRate)
+                if (DateTimeOffset.Now.ToUnixTimeMilliseconds() - _lastDownAutoRepeat >= game.Preferences.SoftDropRate)
                 {
                     _localPlayer.MoveDown();
                     _lastDownAutoRepeat = DateTimeOffset.Now.ToUnixTimeMilliseconds();
                 }
             }
 
-            if (keyboardState.IsKeyDown(Keys.Left) && !_ccwRotatePressed)
+            if (keyboardState.IsKeyDown(game.Preferences.CcwRotateKey) && !_ccwRotatePressed)
             {
                 _ccwRotatePressed = true;
                 _localPlayer.RotateCcw();
             }
 
-            if (keyboardState.IsKeyUp(Keys.Left) && _ccwRotatePressed)
+            if (keyboardState.IsKeyUp(game.Preferences.CcwRotateKey) && _ccwRotatePressed)
                 _ccwRotatePressed = false;
 
-            if (keyboardState.IsKeyDown(Keys.Right) && !_cwRotatePressed)
+            if (keyboardState.IsKeyDown(game.Preferences.CwRotateKey) && !_cwRotatePressed)
             {
                 _cwRotatePressed = true;
                 _localPlayer.RotateCw();
             }
 
-            if (keyboardState.IsKeyUp(Keys.Right) && _cwRotatePressed)
+            if (keyboardState.IsKeyUp(game.Preferences.CwRotateKey) && _cwRotatePressed)
                 _cwRotatePressed = false;
 
-            if (keyboardState.IsKeyDown(Keys.Up) && !_flipPressed)
+            if (keyboardState.IsKeyDown(game.Preferences.FlipKey) && !_flipPressed)
             {
                 _flipPressed = true;
                 _localPlayer.Flip();
             }
 
-            if (keyboardState.IsKeyUp(Keys.Up) && _flipPressed)
+            if (keyboardState.IsKeyUp(game.Preferences.FlipKey) && _flipPressed)
                 _flipPressed = false;
 
-            if (keyboardState.IsKeyDown(Keys.Space) && !_hardDropPressed)
+            if (keyboardState.IsKeyDown(game.Preferences.HardDropKey) && !_hardDropPressed)
             {
                 _hardDropPressed = true;
                 _localPlayer.HardDrop();
             }
 
-            if (keyboardState.IsKeyUp(Keys.Space) && _hardDropPressed)
+            if (keyboardState.IsKeyUp(game.Preferences.HardDropKey) && _hardDropPressed)
                 _hardDropPressed = false;
 
             // Falling Block Gravity
@@ -208,6 +208,21 @@ public class PlayingScreen(PolygonBazookaGame game) : GameScreen(game)
 
             _localPlayer.RenderPosition = new(_lastWindowWidth / 2 - 78 * game.Scale,
                 _lastWindowHeight / 2 - 78 * game.Scale);
+        }
+
+        if (keyboardState.IsKeyDown(game.Preferences.RetryKey) && !_retryPressed)
+        {
+            _retryPressed = true;
+            _retryPressStart = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+        }
+
+        if (_retryPressed && DateTimeOffset.Now.ToUnixTimeMilliseconds() - _retryPressStart >= 1000)
+        {
+            _localPlayer = new(game, true)
+            {
+                RenderPosition = new(_lastWindowWidth / 2 - 78 * game.Scale, _lastWindowHeight / 2 - 78 * game.Scale),
+            };
+            _retryPressed = false;
         }
     }
 

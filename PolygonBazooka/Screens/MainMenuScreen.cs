@@ -65,6 +65,8 @@ public class MainMenuScreen : GameScreen
     private readonly Texture2D _accountIndicator;
     private Rectangle _accountIndicatorBounds;
 
+    private bool _configInitialized;
+    
     private readonly Texture2D _sliderTab;
     private readonly Texture2D _sliderTabHover;
 
@@ -101,11 +103,15 @@ public class MainMenuScreen : GameScreen
     private int _lastWindowWidth;
     private int _lastWindowHeight;
 
+    private readonly SpriteFont _font;
+
     public MainMenuScreen(PolygonBazookaGame game) : base(game)
     {
         _game = game;
 
         _spriteBatch = new SpriteBatch(game.GraphicsDevice);
+
+        _font = game.Content.Load<SpriteFont>("Fonts/Tiny5");
 
         _singleplayerButton = Game.Content.Load<Texture2D>("Textures/ui/singleplayer_button");
         _singleplayerButtonHover = Game.Content.Load<Texture2D>("Textures/ui/singleplayer_button_hover");
@@ -249,6 +255,15 @@ public class MainMenuScreen : GameScreen
 
     private void UpdateConfigMenu(GameTime gameTime, MouseState mouseState, Rectangle mousePosition)
     {
+        if (!_configInitialized)
+        {
+            _configInitialized = true;
+            
+            _dasSliderPercentage = Math.Abs((_game.Preferences.DelayedAutoShift - 300) / 300f);
+            _arrSliderPercentage = Math.Abs((_game.Preferences.AutoRepeatRate - 300) / 300f);
+            _dcdSliderPercentage = Math.Abs((_game.Preferences.DasCutDelay - 300) / 300f);
+        }
+        
         int sliderTabWidth = _sliderTab.Width;
         int sliderTabHeight = _sliderTab.Height;
 
@@ -323,6 +338,7 @@ public class MainMenuScreen : GameScreen
                 _dasSliderRawValue = _configSliderMaxValue;
 
             _dasSliderPercentage = _dasSliderRawValue / (float)_configSliderMaxValue;
+            _game.Preferences.DelayedAutoShift = (int)(-Math.Round(_dasSliderPercentage * 300) + 300);
         }
 
         if (_arrSliderTabPressed && !_dasSliderTabPressed && !_dcdSliderTabPressed ||
@@ -337,6 +353,7 @@ public class MainMenuScreen : GameScreen
                 _arrSliderRawValue = _configSliderMaxValue;
 
             _arrSliderPercentage = _arrSliderRawValue / (float)_configSliderMaxValue;
+            _game.Preferences.AutoRepeatRate = (int)(-Math.Round(_arrSliderPercentage * 300) + 300);
         }
 
         if (_dcdSliderTabPressed && !_dasSliderTabPressed && !_arrSliderTabPressed ||
@@ -351,6 +368,7 @@ public class MainMenuScreen : GameScreen
                 _dcdSliderRawValue = _configSliderMaxValue;
 
             _dcdSliderPercentage = _dcdSliderRawValue / (float)_configSliderMaxValue;
+            _game.Preferences.DasCutDelay = (int)(-Math.Round(_dcdSliderPercentage * 300) + 300);
         }
     }
 
@@ -502,6 +520,18 @@ public class MainMenuScreen : GameScreen
         else if (_dcdSliderTabPressed)
             _spriteBatch.Draw(_sliderTabHover, _dcdSliderTabBounds, Color.White);
         else _spriteBatch.Draw(_sliderTab, _dcdSliderTabBounds, Color.White);
+
+        _spriteBatch.DrawString(_font, "DAS: " + _game.Preferences.DelayedAutoShift + " ms",
+            new Vector2(_dasSliderGuideBounds.X, _dasSliderGuideBounds.Y - _dasSliderTabBounds.Height / 2f),
+            Color.White, 0f, Vector2.Zero, _game.Scale / 2, SpriteEffects.None, 0f);
+
+        _spriteBatch.DrawString(_font, "ARR: " + _game.Preferences.AutoRepeatRate + " ms",
+            new Vector2(_arrSliderGuideBounds.X, _arrSliderGuideBounds.Y - _arrSliderTabBounds.Height / 2f),
+            Color.White, 0f, Vector2.Zero, _game.Scale / 2, SpriteEffects.None, 0f);
+
+        _spriteBatch.DrawString(_font, "DCD: " + _game.Preferences.DasCutDelay + " ms",
+            new Vector2(_dcdSliderGuideBounds.X, _dcdSliderGuideBounds.Y - _dcdSliderTabBounds.Height / 2f),
+            Color.White, 0f, Vector2.Zero, _game.Scale / 2, SpriteEffects.None, 0f);
     }
 
     public override void Draw(GameTime gameTime)
@@ -539,7 +569,6 @@ public class MainMenuScreen : GameScreen
                 DrawConfigMenu(gameTime);
                 break;
         }
-
 
         _spriteBatch.End();
 

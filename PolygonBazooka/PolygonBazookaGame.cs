@@ -25,6 +25,8 @@ namespace PolygonBazooka
 
         public readonly DiscordRichPresence DiscordRpc = new();
 
+        public readonly Preferences Preferences = new();
+
         public GameState State { get; private set; } = GameState.MainMenu;
 
         public float Scale { get; private set; } = 1;
@@ -105,6 +107,13 @@ namespace PolygonBazooka
             GraphicsDevice.Clear(Color.Black);
 
             base.Draw(gameTime);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
+            
+            Preferences.Save();
         }
     }
 }
