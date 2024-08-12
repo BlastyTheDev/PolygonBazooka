@@ -78,11 +78,14 @@ public class MainMenuScreen : GameScreen
     private bool _arrSliderTabPressed;
     private bool _dcdSliderTabPressed;
 
-    private int ConfigSliderMaxValue;
+    private int _configSliderMaxValue;
 
-    private int _dasSliderValue;
-    private int _arrSliderValue;
-    private int _dcdSliderValue;
+    private int _dasSliderRawValue;
+    private int _arrSliderRawValue;
+    private int _dcdSliderRawValue;
+    private float _dasSliderPercentage;
+    private float _arrSliderPercentage;
+    private float _dcdSliderPercentage;
 
     private readonly Texture2D _sliderGuide;
     private Rectangle _dasSliderGuideBounds;
@@ -246,71 +249,108 @@ public class MainMenuScreen : GameScreen
 
     private void UpdateConfigMenu(GameTime gameTime, MouseState mouseState, Rectangle mousePosition)
     {
+        int sliderTabWidth = _sliderTab.Width;
+        int sliderTabHeight = _sliderTab.Height;
+
+        _configSliderMaxValue = (int)(_sliderGuide.Width * _game.Scale - sliderTabWidth * _game.Scale);
+
+        _dasSliderTabBounds = new Rectangle(
+            (int)(_dasSliderGuideBounds.X +
+                  (_dasSliderGuideBounds.Width - _dasSliderTabBounds.Width) * _dasSliderPercentage),
+            (int)(100 * _game.Scale),
+            (int)(_sliderTab.Width * _game.Scale), (int)(_sliderTab.Height * _game.Scale));
+
+        _arrSliderTabBounds = new Rectangle(
+            (int)(_arrSliderGuideBounds.X +
+                  (_arrSliderGuideBounds.Width - _arrSliderTabBounds.Width) * _arrSliderPercentage),
+            (int)((100 + sliderTabHeight * 2) * _game.Scale),
+            (int)(_sliderTab.Width * _game.Scale), (int)(_sliderTab.Height * _game.Scale));
+
+        _dcdSliderTabBounds = new Rectangle(
+            (int)(_dcdSliderGuideBounds.X +
+                  (_dcdSliderGuideBounds.Width - _dcdSliderTabBounds.Width) * _dcdSliderPercentage),
+            (int)((100 + sliderTabHeight * 4) * _game.Scale),
+            (int)(_sliderTab.Width * _game.Scale), (int)(_sliderTab.Height * _game.Scale));
+
         if (_dasSliderTabBounds.Intersects(mousePosition))
         {
             _dasSliderTabHovered = true;
 
             if (mouseState.LeftButton == ButtonState.Pressed)
-            {
                 _dasSliderTabPressed = true;
-            }
         }
         else
-        {
             _dasSliderTabHovered = false;
-        }
 
         if (mouseState.LeftButton == ButtonState.Released && _dasSliderTabPressed)
-        {
             _dasSliderTabPressed = false;
-        }
 
         if (_arrSliderTabBounds.Intersects(mousePosition))
         {
             _arrSliderTabHovered = true;
 
             if (mouseState.LeftButton == ButtonState.Pressed)
-            {
                 _arrSliderTabPressed = true;
-            }
         }
         else
-        {
             _arrSliderTabHovered = false;
-        }
 
         if (mouseState.LeftButton == ButtonState.Released && _arrSliderTabPressed)
-        {
             _arrSliderTabPressed = false;
-        }
 
         if (_dcdSliderTabBounds.Intersects(mousePosition))
         {
             _dcdSliderTabHovered = true;
 
             if (mouseState.LeftButton == ButtonState.Pressed)
-            {
                 _dcdSliderTabPressed = true;
-            }
         }
         else
-        {
             _dcdSliderTabHovered = false;
-        }
 
         if (mouseState.LeftButton == ButtonState.Released && _dcdSliderTabPressed)
-        {
             _dcdSliderTabPressed = false;
+
+        if (_dasSliderTabPressed && !_arrSliderTabPressed && !_dcdSliderTabPressed ||
+            (_dasSliderGuideBounds.Intersects(mousePosition) &&
+             mouseState.LeftButton == ButtonState.Pressed))
+        {
+            _dasSliderRawValue = mousePosition.X - _dasSliderGuideBounds.X - _dasSliderTabBounds.Width / 2;
+
+            if (_dasSliderRawValue < 0)
+                _dasSliderRawValue = 0;
+            else if (_dasSliderRawValue > _configSliderMaxValue)
+                _dasSliderRawValue = _configSliderMaxValue;
+
+            _dasSliderPercentage = _dasSliderRawValue / (float)_configSliderMaxValue;
         }
 
-        if (_dasSliderTabPressed)
+        if (_arrSliderTabPressed && !_dasSliderTabPressed && !_dcdSliderTabPressed ||
+            (_arrSliderGuideBounds.Intersects(mousePosition) &&
+             mouseState.LeftButton == ButtonState.Pressed))
         {
-            _dasSliderValue = mousePosition.X;
+            _arrSliderRawValue = mousePosition.X - _arrSliderGuideBounds.X - _arrSliderTabBounds.Width / 2;
 
-            if (_dasSliderValue < 0)
-                _dasSliderValue = 0;
-            else if (_dasSliderValue > ConfigSliderMaxValue)
-                _dasSliderValue = ConfigSliderMaxValue;
+            if (_arrSliderRawValue < 0)
+                _arrSliderRawValue = 0;
+            else if (_arrSliderRawValue > _configSliderMaxValue)
+                _arrSliderRawValue = _configSliderMaxValue;
+
+            _arrSliderPercentage = _arrSliderRawValue / (float)_configSliderMaxValue;
+        }
+
+        if (_dcdSliderTabPressed && !_dasSliderTabPressed && !_arrSliderTabPressed ||
+            (_dcdSliderGuideBounds.Intersects(mousePosition) &&
+             mouseState.LeftButton == ButtonState.Pressed))
+        {
+            _dcdSliderRawValue = mousePosition.X - _dcdSliderGuideBounds.X - _dcdSliderTabBounds.Width / 2;
+
+            if (_dcdSliderRawValue < 0)
+                _dcdSliderRawValue = 0;
+            else if (_dcdSliderRawValue > _configSliderMaxValue)
+                _dcdSliderRawValue = _configSliderMaxValue;
+
+            _dcdSliderPercentage = _dcdSliderRawValue / (float)_configSliderMaxValue;
         }
     }
 
@@ -553,23 +593,6 @@ public class MainMenuScreen : GameScreen
             _dcdSliderGuideBounds = new Rectangle(_lastWindowWidth / 2 - (int)(_sliderGuide.Width * _game.Scale) / 2,
                 (int)((100 + sliderGuideHeight * 4) * _game.Scale),
                 (int)(_sliderGuide.Width * _game.Scale), (int)(_sliderGuide.Height * _game.Scale));
-
-            int sliderTabWidth = _sliderTab.Width;
-            int sliderTabHeight = _sliderTab.Height;
-
-            ConfigSliderMaxValue = (int)(_sliderGuide.Width * _game.Scale - sliderTabWidth * _game.Scale);
-
-            _dasSliderTabBounds = new Rectangle(_dasSliderGuideBounds.X + _dasSliderValue,
-                (int)(100 * _game.Scale),
-                (int)(_sliderTab.Width * _game.Scale), (int)(_sliderTab.Height * _game.Scale));
-
-            _arrSliderTabBounds = new Rectangle(_arrSliderGuideBounds.X + _arrSliderValue,
-                (int)((100 + sliderTabHeight * 2) * _game.Scale),
-                (int)(_sliderTab.Width * _game.Scale), (int)(_sliderTab.Height * _game.Scale));
-
-            _dcdSliderTabBounds = new Rectangle(_dcdSliderGuideBounds.X + _dcdSliderValue,
-                (int)((100 + sliderTabHeight * 4) * _game.Scale),
-                (int)(_sliderTab.Width * _game.Scale), (int)(_sliderTab.Height * _game.Scale));
 
             // back button
             _backButtonBounds = new Rectangle(0, (int)(_backButton.Height * _game.Scale),

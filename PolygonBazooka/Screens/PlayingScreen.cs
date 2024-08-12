@@ -76,25 +76,6 @@ public class PlayingScreen(PolygonBazookaGame game) : GameScreen(game)
                 game.ChangeGameState(GameState.MainMenu);
                 _failTrigger = false;
             }
-
-            // if (keyboardState.IsKeyDown(Keys.R))
-            // {
-            //     if (!_retryPressed)
-            //         _retryPressStart = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-            //
-            //     _retryPressed = true;
-            //
-            //     if (DateTimeOffset.Now.ToUnixTimeMilliseconds() - _retryPressStart >= 1000)
-            //     {
-            //         _localPlayer = new(game, true)
-            //         {
-            //             RenderPosition = new(_lastWindowWidth / 2 - 78 * game.Scale, _lastWindowHeight / 2 - 78 * game.Scale),
-            //         };
-            //     }
-            // }
-            //
-            // if (keyboardState.IsKeyUp(Keys.R) && _retryPressed)
-            //     _retryPressed = false;
         }
         else
         {
