@@ -88,10 +88,6 @@ namespace PolygonBazooka
 
         protected override void Update(GameTime gameTime)
         {
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed ||
-                Keyboard.GetState().IsKeyDown(Keys.Escape))
-                Exit();
-
             if (_lastWindowWidth != Window.ClientBounds.Width || _lastWindowHeight != Window.ClientBounds.Height)
             {
                 Scale = (float)Window.ClientBounds.Height / 300;

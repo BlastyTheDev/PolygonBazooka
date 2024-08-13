@@ -27,6 +27,9 @@ public class PlayingScreen(PolygonBazookaGame game) : GameScreen(game)
     private bool _retryPressed;
     private long _retryPressStart;
 
+    private bool _forfeitPressed;
+    private long _forfeitPressStart;
+
     private bool _leftDasActive;
     private bool _rightDasActive;
 
@@ -223,6 +226,18 @@ public class PlayingScreen(PolygonBazookaGame game) : GameScreen(game)
                 RenderPosition = new(_lastWindowWidth / 2 - 78 * game.Scale, _lastWindowHeight / 2 - 78 * game.Scale),
             };
             _retryPressed = false;
+        }
+        
+        if (keyboardState.IsKeyDown(game.Preferences.ForfeitKey) && !_forfeitPressed)
+        {
+            _forfeitPressed = true;
+            _forfeitPressStart = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+        }
+        
+        if (_forfeitPressed && DateTimeOffset.Now.ToUnixTimeMilliseconds() - _forfeitPressStart >= 1000)
+        {
+            game.ChangeGameState(GameState.MainMenu);
+            _forfeitPressed = false;
         }
     }
 

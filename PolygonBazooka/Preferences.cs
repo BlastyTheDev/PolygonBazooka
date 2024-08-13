@@ -39,6 +39,46 @@ public class Preferences
     public Keys ForfeitKey { get; set; } = Keys.F;
     public Keys PauseKey { get; set; } = Keys.Escape;
 
+    public string GetPreference(Keybinds keybind)
+    {
+        return keybind switch
+        {
+            Keybinds.LeftKey => LeftKey.ToString(),
+            Keybinds.RightKey => RightKey.ToString(),
+            Keybinds.CwRotateKey => CwRotateKey.ToString(),
+            Keybinds.CcwRotateKey => CcwRotateKey.ToString(),
+            Keybinds.FlipKey => FlipKey.ToString(),
+            Keybinds.HardDropKey => HardDropKey.ToString(),
+            Keybinds.SoftDropKey => SoftDropKey.ToString(),
+            Keybinds.RetryKey => RetryKey.ToString(),
+            Keybinds.ForfeitKey => ForfeitKey.ToString(),
+            Keybinds.PauseKey => PauseKey.ToString(),
+            _ => throw new ArgumentOutOfRangeException(nameof(keybind), keybind, null)
+        };
+    }
+
+    public void SetPreference(Keybinds? keybind, Keys key)
+    {
+        if (keybind == null)
+            return;
+
+        // assign a variable to have a cleaner, less clunky switch
+        var x = keybind switch
+        {
+            Keybinds.LeftKey => LeftKey = key,
+            Keybinds.RightKey => RightKey = key,
+            Keybinds.CwRotateKey => CwRotateKey = key,
+            Keybinds.CcwRotateKey => CcwRotateKey = key,
+            Keybinds.FlipKey => FlipKey = key,
+            Keybinds.HardDropKey => HardDropKey = key,
+            Keybinds.SoftDropKey => SoftDropKey = key,
+            Keybinds.RetryKey => RetryKey = key,
+            Keybinds.ForfeitKey => ForfeitKey = key,
+            Keybinds.PauseKey => PauseKey = key,
+            _ => throw new ArgumentOutOfRangeException(nameof(keybind), keybind, null)
+        };
+    }
+
     public Preferences()
     {
         Load();
@@ -73,7 +113,7 @@ public class Preferences
             PauseKey = (Keys)Enum.Parse(typeof(Keys), preferences[13]);
         }
     }
-    
+
     public void Save()
     {
         File.WriteAllLines("preferences.txt", [
@@ -92,5 +132,23 @@ public class Preferences
             $"ForfeitKey={ForfeitKey}",
             $"PauseKey={PauseKey}"
         ]);
+    }
+
+    public static string GetKeybindName(Keybinds keybind)
+    {
+        return keybind switch
+        {
+            Keybinds.LeftKey => "Move Falling Piece Left",
+            Keybinds.RightKey => "Move Falling Piece Right",
+            Keybinds.CwRotateKey => "Rotate Falling Piece Clockwise",
+            Keybinds.CcwRotateKey => "Rotate Falling Piece Counter Clockwise",
+            Keybinds.FlipKey => "Flip Falling Piece (180 degree rotation)",
+            Keybinds.HardDropKey => "Hard Drop Falling Piece",
+            Keybinds.SoftDropKey => "Soft Drop Falling Piece",
+            Keybinds.RetryKey => "Hold to Retry Game (if possible)",
+            Keybinds.ForfeitKey => "Hold to Forfeit Game",
+            Keybinds.PauseKey => "Pause Game",
+            _ => throw new ArgumentOutOfRangeException(nameof(keybind), keybind, null)
+        };
     }
 }

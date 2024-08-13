@@ -113,6 +113,7 @@ public class MainMenuScreen : GameScreen
     private readonly Dictionary<Keybinds, Rectangle> _keybindTextPanelBounds;
     private readonly Dictionary<Keybinds, Rectangle> _keybindSwitchButtonBounds;
 
+    private Keybinds? _currentlyPressedKeybind = null;
     private Keybinds? _currentlySwitchingKeybind = null;
 
     private bool _keybindMenuInitialized;
@@ -463,13 +464,33 @@ public class MainMenuScreen : GameScreen
                 (int)(100 * _game.Scale + i * 20 * _game.Scale),
                 (int)(_keybindTextPanel.Width * _game.Scale), (int)(_keybindTextPanel.Height * _game.Scale));
 
-            _keybindSwitchButtonBounds[keybind] = new Rectangle(
+            Rectangle keybindSwitchButtonBounds = new(
                 (int)(_lastWindowWidth / 2f + _keybindTextPanel.Width * _game.Scale / 2 -
                       _keybindSwitchButton.Width / 3f * _game.Scale),
                 (int)(100 * _game.Scale + i * 20 * _game.Scale),
                 (int)(_keybindSwitchButton.Width * _game.Scale), (int)(_keybindSwitchButton.Height * _game.Scale));
 
+            _keybindSwitchButtonBounds[keybind] = keybindSwitchButtonBounds;
+
+            if (keybindSwitchButtonBounds.Intersects(mousePosition) && mouseState.LeftButton == ButtonState.Pressed)
+                _currentlyPressedKeybind = keybind;
+            else if (_currentlyPressedKeybind == keybind && mouseState.LeftButton == ButtonState.Released)
+                _currentlySwitchingKeybind = keybind;
+
             i++;
+        }
+
+        if (_currentlySwitchingKeybind != null)
+        {
+            var keyboardState = Keyboard.GetState();
+
+            if (keyboardState.GetPressedKeys().Length > 0)
+            {
+                _game.Preferences.SetPreference(_currentlySwitchingKeybind, keyboardState.GetPressedKeys()[0]);
+
+                _currentlyPressedKeybind = null;
+                _currentlySwitchingKeybind = null;
+            }
         }
     }
 
@@ -657,6 +678,16 @@ public class MainMenuScreen : GameScreen
 
             _spriteBatch.Draw(keybind == _currentlySwitchingKeybind ? _keybindSwitchButtonActive : _keybindSwitchButton,
                 _keybindSwitchButtonBounds[keybind], Color.White);
+
+            _spriteBatch.DrawString(_font, Preferences.GetKeybindName(keybind),
+                new Vector2(_keybindTextPanelBounds[keybind].X + 5 * _game.Scale,
+                    _keybindTextPanelBounds[keybind].Y + 2.5f * _game.Scale),
+                Color.White, 0f, Vector2.Zero, _game.Scale / 1.5f, SpriteEffects.None, 0f);
+
+            _spriteBatch.DrawString(_font, _game.Preferences.GetPreference(keybind),
+                new Vector2(_keybindSwitchButtonBounds[keybind].X + 5 * _game.Scale,
+                    _keybindTextPanelBounds[keybind].Y + 2.5f * _game.Scale),
+                Color.White, 0f, Vector2.Zero, _game.Scale / 1.5f, SpriteEffects.None, 0f);
         }
     }
 
