@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -12,6 +13,7 @@ public enum Menus
     MultiplayerMenu,
     RankedMenu,
     ConfigMenu,
+    KeybindsMenu,
 }
 
 public class MainMenuScreen : GameScreen
@@ -55,6 +57,13 @@ public class MainMenuScreen : GameScreen
     private bool _rankedButtonHovered;
     private bool _rankedButtonPressed;
 
+    private readonly Texture2D _keybindsButton;
+    private readonly Texture2D _keybindsButtonHover;
+    private readonly Texture2D _keybindsButtonPress;
+    private Rectangle _keybindsButtonBounds;
+    private bool _keybindsButtonHovered;
+    private bool _keybindsButtonPressed;
+
     // other non main buttons/elements
     private readonly Texture2D _switchAccountButton;
     private readonly Texture2D _switchAccountButtonHover;
@@ -66,7 +75,7 @@ public class MainMenuScreen : GameScreen
     private Rectangle _accountIndicatorBounds;
 
     private bool _configInitialized;
-    
+
     private readonly Texture2D _sliderTab;
     private readonly Texture2D _sliderTabHover;
 
@@ -94,6 +103,20 @@ public class MainMenuScreen : GameScreen
     private Rectangle _arrSliderGuideBounds;
     private Rectangle _dcdSliderGuideBounds;
 
+    private readonly Texture2D _keybindTextPanel;
+
+    private readonly Texture2D _keybindSwitchButton;
+    private readonly Texture2D _keybindSwitchButtonActive;
+    private bool _keybindSwitchButtonHovered;
+    private bool _keybindSwitchButtonPressed;
+
+    private readonly Dictionary<Keybinds, Rectangle> _keybindTextPanelBounds;
+    private readonly Dictionary<Keybinds, Rectangle> _keybindSwitchButtonBounds;
+
+    private Keybinds? _currentlySwitchingKeybind = null;
+
+    private bool _keybindMenuInitialized;
+
     private readonly Texture2D _backButton;
     private readonly Texture2D _backButtonHover;
     private Rectangle _backButtonBounds;
@@ -110,6 +133,9 @@ public class MainMenuScreen : GameScreen
         _game = game;
 
         _spriteBatch = new SpriteBatch(game.GraphicsDevice);
+
+        _keybindTextPanelBounds = new();
+        _keybindSwitchButtonBounds = new();
 
         _font = game.Content.Load<SpriteFont>("Fonts/Tiny5");
 
@@ -129,6 +155,10 @@ public class MainMenuScreen : GameScreen
         _rankedButtonHover = Game.Content.Load<Texture2D>("Textures/ui/ranked_button_hover");
         _rankedButtonPress = Game.Content.Load<Texture2D>("Textures/ui/ranked_button_pressed");
 
+        _keybindsButton = Game.Content.Load<Texture2D>("Textures/ui/keybinds_button");
+        _keybindsButtonHover = Game.Content.Load<Texture2D>("Textures/ui/keybinds_button_hover");
+        _keybindsButtonPress = Game.Content.Load<Texture2D>("Textures/ui/keybinds_button_pressed");
+
         _switchAccountButton = Game.Content.Load<Texture2D>("Textures/ui/switch_account_button");
         _switchAccountButtonHover = Game.Content.Load<Texture2D>("Textures/ui/switch_account_button_hover");
 
@@ -141,6 +171,11 @@ public class MainMenuScreen : GameScreen
 
         _backButton = Game.Content.Load<Texture2D>("Textures/ui/back_button");
         _backButtonHover = Game.Content.Load<Texture2D>("Textures/ui/back_button_hover");
+
+        _keybindTextPanel = Game.Content.Load<Texture2D>("Textures/ui/keybind_text_panel");
+
+        _keybindSwitchButton = Game.Content.Load<Texture2D>("Textures/ui/keybind_switch");
+        _keybindSwitchButtonActive = Game.Content.Load<Texture2D>("Textures/ui/keybind_switch_active");
     }
 
     private void UpdateMainMenu(GameTime gameTime, MouseState mouseState, Rectangle mousePosition)
@@ -258,12 +293,12 @@ public class MainMenuScreen : GameScreen
         if (!_configInitialized)
         {
             _configInitialized = true;
-            
+
             _dasSliderPercentage = Math.Abs((_game.Preferences.DelayedAutoShift - 300) / 300f);
             _arrSliderPercentage = Math.Abs((_game.Preferences.AutoRepeatRate - 300) / 300f);
             _dcdSliderPercentage = Math.Abs((_game.Preferences.DasCutDelay - 300) / 300f);
         }
-        
+
         int sliderTabWidth = _sliderTab.Width;
         int sliderTabHeight = _sliderTab.Height;
 
@@ -370,6 +405,72 @@ public class MainMenuScreen : GameScreen
             _dcdSliderPercentage = _dcdSliderRawValue / (float)_configSliderMaxValue;
             _game.Preferences.DasCutDelay = (int)(-Math.Round(_dcdSliderPercentage * 300) + 300);
         }
+
+        if (_keybindsButtonBounds.Intersects(mousePosition))
+        {
+            _keybindsButtonHovered = true;
+
+            if (mouseState.LeftButton == ButtonState.Pressed)
+                _keybindsButtonPressed = true;
+        }
+        else
+            _keybindsButtonHovered = false;
+
+        if (mouseState.LeftButton == ButtonState.Released && _keybindsButtonPressed)
+        {
+            _keybindsButtonPressed = false;
+
+            if (_keybindsButtonHovered)
+                _currentMenu = Menus.KeybindsMenu;
+        }
+    }
+
+    private void UpdateKeybindsMenu(GameTime gameTime, MouseState mouseState, Rectangle mousePosition)
+    {
+        if (!_keybindMenuInitialized)
+        {
+            _keybindTextPanelBounds.Add(Keybinds.LeftKey, new Rectangle(0, 0, 0, 0));
+            _keybindTextPanelBounds.Add(Keybinds.RightKey, new Rectangle(0, 0, 0, 0));
+            _keybindTextPanelBounds.Add(Keybinds.CwRotateKey, new Rectangle(0, 0, 0, 0));
+            _keybindTextPanelBounds.Add(Keybinds.CcwRotateKey, new Rectangle(0, 0, 0, 0));
+            _keybindTextPanelBounds.Add(Keybinds.FlipKey, new Rectangle(0, 0, 0, 0));
+            _keybindTextPanelBounds.Add(Keybinds.HardDropKey, new Rectangle(0, 0, 0, 0));
+            _keybindTextPanelBounds.Add(Keybinds.SoftDropKey, new Rectangle(0, 0, 0, 0));
+            _keybindTextPanelBounds.Add(Keybinds.RetryKey, new Rectangle(0, 0, 0, 0));
+            _keybindTextPanelBounds.Add(Keybinds.ForfeitKey, new Rectangle(0, 0, 0, 0));
+            _keybindTextPanelBounds.Add(Keybinds.PauseKey, new Rectangle(0, 0, 0, 0));
+
+            _keybindSwitchButtonBounds.Add(Keybinds.LeftKey, new Rectangle(0, 0, 0, 0));
+            _keybindSwitchButtonBounds.Add(Keybinds.RightKey, new Rectangle(0, 0, 0, 0));
+            _keybindSwitchButtonBounds.Add(Keybinds.CwRotateKey, new Rectangle(0, 0, 0, 0));
+            _keybindSwitchButtonBounds.Add(Keybinds.CcwRotateKey, new Rectangle(0, 0, 0, 0));
+            _keybindSwitchButtonBounds.Add(Keybinds.FlipKey, new Rectangle(0, 0, 0, 0));
+            _keybindSwitchButtonBounds.Add(Keybinds.HardDropKey, new Rectangle(0, 0, 0, 0));
+            _keybindSwitchButtonBounds.Add(Keybinds.SoftDropKey, new Rectangle(0, 0, 0, 0));
+            _keybindSwitchButtonBounds.Add(Keybinds.RetryKey, new Rectangle(0, 0, 0, 0));
+            _keybindSwitchButtonBounds.Add(Keybinds.ForfeitKey, new Rectangle(0, 0, 0, 0));
+            _keybindSwitchButtonBounds.Add(Keybinds.PauseKey, new Rectangle(0, 0, 0, 0));
+
+            _keybindMenuInitialized = true;
+        }
+
+        int i = 0;
+        foreach (Keybinds keybind in _keybindTextPanelBounds.Keys)
+        {
+            _keybindTextPanelBounds[keybind] = new Rectangle(
+                (int)(_lastWindowWidth / 2f - _keybindTextPanel.Width * _game.Scale / 2 -
+                      _keybindSwitchButton.Width / 3f * 2 * _game.Scale),
+                (int)(100 * _game.Scale + i * 20 * _game.Scale),
+                (int)(_keybindTextPanel.Width * _game.Scale), (int)(_keybindTextPanel.Height * _game.Scale));
+
+            _keybindSwitchButtonBounds[keybind] = new Rectangle(
+                (int)(_lastWindowWidth / 2f + _keybindTextPanel.Width * _game.Scale / 2 -
+                      _keybindSwitchButton.Width / 3f * _game.Scale),
+                (int)(100 * _game.Scale + i * 20 * _game.Scale),
+                (int)(_keybindSwitchButton.Width * _game.Scale), (int)(_keybindSwitchButton.Height * _game.Scale));
+
+            i++;
+        }
     }
 
     public override void Update(GameTime gameTime)
@@ -435,6 +536,10 @@ public class MainMenuScreen : GameScreen
                     case Menus.ConfigMenu:
                         _currentMenu = Menus.MainMenu;
                         break;
+
+                    case Menus.KeybindsMenu:
+                        _currentMenu = Menus.ConfigMenu;
+                        break;
                 }
             }
         }
@@ -455,6 +560,10 @@ public class MainMenuScreen : GameScreen
 
             case Menus.ConfigMenu:
                 UpdateConfigMenu(gameTime, mouseState, mousePosition);
+                break;
+
+            case Menus.KeybindsMenu:
+                UpdateKeybindsMenu(gameTime, mouseState, mousePosition);
                 break;
         }
     }
@@ -532,6 +641,23 @@ public class MainMenuScreen : GameScreen
         _spriteBatch.DrawString(_font, "DCD: " + _game.Preferences.DasCutDelay + " ms",
             new Vector2(_dcdSliderGuideBounds.X, _dcdSliderGuideBounds.Y - _dcdSliderTabBounds.Height / 2f),
             Color.White, 0f, Vector2.Zero, _game.Scale / 2, SpriteEffects.None, 0f);
+
+        if (_keybindsButtonHovered && !_keybindsButtonPressed)
+            _spriteBatch.Draw(_keybindsButtonHover, _keybindsButtonBounds, Color.White);
+        else if (_keybindsButtonPressed)
+            _spriteBatch.Draw(_keybindsButtonPress, _keybindsButtonBounds, Color.White);
+        else _spriteBatch.Draw(_keybindsButton, _keybindsButtonBounds, Color.White);
+    }
+
+    private void DrawKeybindsMenu(GameTime gameTime)
+    {
+        foreach (Keybinds keybind in _keybindTextPanelBounds.Keys)
+        {
+            _spriteBatch.Draw(_keybindTextPanel, _keybindTextPanelBounds[keybind], Color.White);
+
+            _spriteBatch.Draw(keybind == _currentlySwitchingKeybind ? _keybindSwitchButtonActive : _keybindSwitchButton,
+                _keybindSwitchButtonBounds[keybind], Color.White);
+        }
     }
 
     public override void Draw(GameTime gameTime)
@@ -567,6 +693,10 @@ public class MainMenuScreen : GameScreen
 
             case Menus.ConfigMenu:
                 DrawConfigMenu(gameTime);
+                break;
+
+            case Menus.KeybindsMenu:
+                DrawKeybindsMenu(gameTime);
                 break;
         }
 
@@ -622,6 +752,10 @@ public class MainMenuScreen : GameScreen
             _dcdSliderGuideBounds = new Rectangle(_lastWindowWidth / 2 - (int)(_sliderGuide.Width * _game.Scale) / 2,
                 (int)((100 + sliderGuideHeight * 4) * _game.Scale),
                 (int)(_sliderGuide.Width * _game.Scale), (int)(_sliderGuide.Height * _game.Scale));
+
+            _keybindsButtonBounds = new Rectangle(_lastWindowWidth / 2 - (int)(_keybindsButton.Width * _game.Scale) / 2,
+                (int)((100 + sliderGuideHeight * 7) * _game.Scale), (int)(_keybindsButton.Width * _game.Scale),
+                (int)(_keybindsButton.Height * _game.Scale));
 
             // back button
             _backButtonBounds = new Rectangle(0, (int)(_backButton.Height * _game.Scale),

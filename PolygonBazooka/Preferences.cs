@@ -4,6 +4,20 @@ using Microsoft.Xna.Framework.Input;
 
 namespace PolygonBazooka;
 
+public enum Keybinds
+{
+    LeftKey,
+    RightKey,
+    CwRotateKey,
+    CcwRotateKey,
+    FlipKey,
+    HardDropKey,
+    SoftDropKey,
+    RetryKey,
+    ForfeitKey,
+    PauseKey,
+}
+
 public class Preferences
 {
     public int DelayedAutoShift { get; set; } = 150;
@@ -29,32 +43,35 @@ public class Preferences
     {
         Load();
     }
-    
+
     private void Load()
     {
-        string[] preferences = File.ReadAllLines("preferences.txt");
+        if (File.Exists("preferences.txt"))
+        {
+            string[] preferences = File.ReadAllLines("preferences.txt");
 
-        for (int line = 0; line < preferences.Length; line++)
-            preferences[line] = preferences[line].Split('=')[1];
-        
-        DelayedAutoShift = int.Parse(preferences[0]);
-        AutoRepeatRate = int.Parse(preferences[1]);
-        DasCutDelay = int.Parse(preferences[2]);
-        SoftDropRate = int.Parse(preferences[3]);
-        
-        LeftKey = (Keys)Enum.Parse(typeof(Keys), preferences[4]);
-        RightKey = (Keys)Enum.Parse(typeof(Keys), preferences[5]);
-        
-        CwRotateKey = (Keys)Enum.Parse(typeof(Keys), preferences[6]);
-        CcwRotateKey = (Keys)Enum.Parse(typeof(Keys), preferences[7]);
-        FlipKey = (Keys)Enum.Parse(typeof(Keys), preferences[8]);
-        
-        HardDropKey = (Keys)Enum.Parse(typeof(Keys), preferences[9]);
-        SoftDropKey = (Keys)Enum.Parse(typeof(Keys), preferences[10]);
-        
-        RetryKey = (Keys)Enum.Parse(typeof(Keys), preferences[11]);
-        ForfeitKey = (Keys)Enum.Parse(typeof(Keys), preferences[12]);
-        PauseKey = (Keys)Enum.Parse(typeof(Keys), preferences[13]);
+            for (int line = 0; line < preferences.Length; line++)
+                preferences[line] = preferences[line].Split('=')[1];
+
+            DelayedAutoShift = int.Parse(preferences[0]);
+            AutoRepeatRate = int.Parse(preferences[1]);
+            DasCutDelay = int.Parse(preferences[2]);
+            SoftDropRate = int.Parse(preferences[3]);
+
+            LeftKey = (Keys)Enum.Parse(typeof(Keys), preferences[4]);
+            RightKey = (Keys)Enum.Parse(typeof(Keys), preferences[5]);
+
+            CwRotateKey = (Keys)Enum.Parse(typeof(Keys), preferences[6]);
+            CcwRotateKey = (Keys)Enum.Parse(typeof(Keys), preferences[7]);
+            FlipKey = (Keys)Enum.Parse(typeof(Keys), preferences[8]);
+
+            HardDropKey = (Keys)Enum.Parse(typeof(Keys), preferences[9]);
+            SoftDropKey = (Keys)Enum.Parse(typeof(Keys), preferences[10]);
+
+            RetryKey = (Keys)Enum.Parse(typeof(Keys), preferences[11]);
+            ForfeitKey = (Keys)Enum.Parse(typeof(Keys), preferences[12]);
+            PauseKey = (Keys)Enum.Parse(typeof(Keys), preferences[13]);
+        }
     }
     
     public void Save()
