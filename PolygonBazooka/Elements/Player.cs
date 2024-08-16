@@ -34,20 +34,7 @@ public class Player : DrawableGameComponent
     private readonly SpriteBatch _spriteBatch;
 
     private readonly Texture2D _boardTexture;
-
-    private readonly Texture2D _blueTile;
-    private readonly Texture2D _greenTile;
-    private readonly Texture2D _redTile;
-    private readonly Texture2D _yellowTile;
-    private readonly Texture2D _bonusTile;
-    private readonly Texture2D _garbageTile;
-
-    private readonly Texture2D _blueShadow;
-    private readonly Texture2D _greenShadow;
-    private readonly Texture2D _redShadow;
-    private readonly Texture2D _yellowShadow;
-    private readonly Texture2D _bonusShadow;
-
+    
     private readonly Texture2DAtlas _clearAnimationAtlas;
 
     // this is able to be an int because any clear animations that exist play at the same time
@@ -85,29 +72,8 @@ public class Player : DrawableGameComponent
         _spriteBatch = new(GraphicsDevice);
 
         _boardTexture = Game.Content.Load<Texture2D>("Textures/board");
-        _blueTile = Game.Content.Load<Texture2D>("Textures/blue");
-        _greenTile = Game.Content.Load<Texture2D>("Textures/green");
-        _redTile = Game.Content.Load<Texture2D>("Textures/red");
-        _yellowTile = Game.Content.Load<Texture2D>("Textures/yellow");
-        _bonusTile = Game.Content.Load<Texture2D>("Textures/bonus");
-        _garbageTile = Game.Content.Load<Texture2D>("Textures/garbage");
 
-        _blueShadow = Game.Content.Load<Texture2D>("Textures/blue_shadow");
-        _greenShadow = Game.Content.Load<Texture2D>("Textures/green_shadow");
-        _redShadow = Game.Content.Load<Texture2D>("Textures/red_shadow");
-        _yellowShadow = Game.Content.Load<Texture2D>("Textures/yellow_shadow");
-        _bonusShadow = Game.Content.Load<Texture2D>("Textures/bonus_shadow");
-
-        Texture2D clearSpriteSheet = Game.Content.Load<Texture2D>("Textures/clear_sprite_sheet");
-        _clearAnimationAtlas = new(clearSpriteSheet);
-        _clearAnimationAtlas.CreateRegion(48 * 0, 0, 48, 48);
-        _clearAnimationAtlas.CreateRegion(48 * 1, 0, 48, 48);
-        _clearAnimationAtlas.CreateRegion(48 * 2, 0, 48, 48);
-        _clearAnimationAtlas.CreateRegion(48 * 3, 0, 48, 48);
-        _clearAnimationAtlas.CreateRegion(48 * 4, 0, 48, 48);
-        _clearAnimationAtlas.CreateRegion(48 * 5, 0, 48, 48);
-        _clearAnimationAtlas.CreateRegion(48 * 6, 0, 48, 48);
-        _clearAnimationAtlas.CreateRegion(48 * 7, 0, 48, 48);
+        _clearAnimationAtlas = _game.Textures.ClearAnimationAtlas;
     }
 
     public override void Draw(GameTime gameTime)
@@ -232,40 +198,13 @@ public class Player : DrawableGameComponent
 
     private void RenderTile(TileType type, int x, int y, bool shadow = false)
     {
-        Texture2D texture = shadow ? GetShadowTexture(type) : GetTileTexture(type);
+        Texture2D texture = shadow ? _game.Textures.GetShadow(type) : _game.Textures.GetTile(type);
 
         if (texture != null)
         {
             _spriteBatch.Draw(texture, new Rectangle(x, y,
                 (int)(texture.Width * _game.Scale), (int)(texture.Height * _game.Scale)), Color.White);
         }
-    }
-
-    private Texture2D GetTileTexture(TileType type)
-    {
-        return type switch
-        {
-            TileType.Blue => _blueTile,
-            TileType.Green => _greenTile,
-            TileType.Red => _redTile,
-            TileType.Yellow => _yellowTile,
-            TileType.Bonus => _bonusTile,
-            TileType.Garbage => _garbageTile,
-            _ => null
-        };
-    }
-
-    private Texture2D GetShadowTexture(TileType type)
-    {
-        return type switch
-        {
-            TileType.Blue => _blueShadow,
-            TileType.Green => _greenShadow,
-            TileType.Red => _redShadow,
-            TileType.Yellow => _yellowShadow,
-            TileType.Bonus => _bonusShadow,
-            _ => null
-        };
     }
 
     public void HardDrop()

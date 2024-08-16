@@ -263,14 +263,10 @@ public class MainMenuScreen : GameScreen
             _rankedButtonHovered = true;
 
             if (mouseState.LeftButton == ButtonState.Pressed)
-            {
                 _rankedButtonPressed = true;
-            }
         }
         else
-        {
             _rankedButtonHovered = false;
-        }
 
         if (mouseState.LeftButton == ButtonState.Released && _rankedButtonPressed)
         {
@@ -278,7 +274,9 @@ public class MainMenuScreen : GameScreen
 
             if (_rankedButtonHovered)
             {
-                _currentMenu = Menus.RankedMenu;
+                // _currentMenu = Menus.RankedMenu;
+                // for debug
+                _game.ChangeGameState(GameState.RankedPlaying);
             }
         }
     }

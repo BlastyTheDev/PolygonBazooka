@@ -4,4 +4,6 @@ public enum ScreenName
 {
     MainMenu,
     Playing,
+    RankedMenu,
+    RankedPlay,
 }

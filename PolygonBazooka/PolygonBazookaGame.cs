@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended.Screens;
 using PolygonBazooka.Networking;
 using PolygonBazooka.Screens;
+using PolygonBazooka.Util;
 
 namespace PolygonBazooka
 {
@@ -30,6 +30,8 @@ namespace PolygonBazooka
 
         public readonly Authentication Authentication = new();
 
+        public readonly Textures Textures;
+
         public GameState State { get; private set; } = GameState.MainMenu;
 
         public float Scale { get; private set; } = 1;
@@ -46,12 +48,13 @@ namespace PolygonBazooka
             graphics.ApplyChanges();
 
             Content.RootDirectory = "Content";
+            Textures = new(this);
             IsMouseVisible = true;
             Window.AllowUserResizing = true;
             IsFixedTimeStep = false;
 
             Components.Add(_screenManager);
-            
+
             // DEBUG
             // Authentication.LoginAsync("test", "test", true).Wait();
             // Authentication.RegisterAsync("test", "test", "test@test.test").Wait();
@@ -61,6 +64,8 @@ namespace PolygonBazooka
         {
             _screens.Add(ScreenName.MainMenu, new MainMenuScreen(this));
             _screens.Add(ScreenName.Playing, new PlayingScreen(this));
+            _screens.Add(ScreenName.RankedMenu, new RankedMenuScreen(this));
+            _screens.Add(ScreenName.RankedPlay, new RankedMatchScreen(this));
 
             base.Initialize();
         }
@@ -75,9 +80,15 @@ namespace PolygonBazooka
                 case GameState.MainMenu:
                     LoadScreen(ScreenName.MainMenu);
                     break;
+
                 case GameState.SoloPlaying:
                     LoadScreen(ScreenName.Playing);
                     break;
+
+                case GameState.RankedPlaying:
+                    LoadScreen(ScreenName.RankedPlay);
+                    break;
+
                 default:
                     throw new ArgumentOutOfRangeException(nameof(newState), newState, null);
             }
@@ -115,7 +126,7 @@ namespace PolygonBazooka
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);
-            
+
             Preferences.Save();
             Authentication.Dispose();
         }
