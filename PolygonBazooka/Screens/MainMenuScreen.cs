@@ -107,8 +107,6 @@ public class MainMenuScreen : GameScreen
 
     private readonly Texture2D _keybindSwitchButton;
     private readonly Texture2D _keybindSwitchButtonActive;
-    private bool _keybindSwitchButtonHovered;
-    private bool _keybindSwitchButtonPressed;
 
     private readonly Dictionary<Keybinds, Rectangle> _keybindTextPanelBounds;
     private readonly Dictionary<Keybinds, Rectangle> _keybindSwitchButtonBounds;
@@ -505,14 +503,10 @@ public class MainMenuScreen : GameScreen
             _switchAccountButtonHovered = true;
 
             if (mouseState.LeftButton == ButtonState.Pressed)
-            {
                 _switchAccountButtonPressed = true;
-            }
         }
         else
-        {
             _switchAccountButtonHovered = false;
-        }
 
         if (mouseState.LeftButton == ButtonState.Released && _switchAccountButtonPressed)
         {

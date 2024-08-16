@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended.Screens;
+using PolygonBazooka.Networking;
 using PolygonBazooka.Screens;
 
 namespace PolygonBazooka
@@ -27,6 +28,8 @@ namespace PolygonBazooka
 
         public readonly Preferences Preferences = new();
 
+        public readonly Authentication Authentication = new();
+
         public GameState State { get; private set; } = GameState.MainMenu;
 
         public float Scale { get; private set; } = 1;
@@ -48,6 +51,10 @@ namespace PolygonBazooka
             IsFixedTimeStep = false;
 
             Components.Add(_screenManager);
+            
+            // DEBUG
+            // Authentication.LoginAsync("test", "test", true).Wait();
+            // Authentication.RegisterAsync("test", "test", "test@test.test").Wait();
         }
 
         protected override void Initialize()
@@ -110,6 +117,7 @@ namespace PolygonBazooka
             base.Dispose(disposing);
             
             Preferences.Save();
+            Authentication.Dispose();
         }
     }
 }
