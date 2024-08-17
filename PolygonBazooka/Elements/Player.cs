@@ -34,7 +34,7 @@ public class Player : DrawableGameComponent
     private readonly SpriteBatch _spriteBatch;
 
     private readonly Texture2D _boardTexture;
-    
+
     private readonly Texture2DAtlas _clearAnimationAtlas;
 
     // this is able to be an int because any clear animations that exist play at the same time
@@ -51,7 +51,10 @@ public class Player : DrawableGameComponent
 
     private readonly PolygonBazookaGame _game;
 
-    public Player(PolygonBazookaGame game, bool localPlayer) : base(game)
+    private readonly bool _singlePlayer;
+    private readonly bool _vsEnemy;
+
+    public Player(PolygonBazookaGame game, bool singlePlayer, bool vsEnemy = false) : base(game)
     {
         _game = game;
 
@@ -62,7 +65,10 @@ public class Player : DrawableGameComponent
         _fallingBlockOrigin = TileType.Empty;
         _fallingBlockOrbit = TileType.Empty;
 
-        if (localPlayer)
+        _singlePlayer = singlePlayer;
+        _vsEnemy = vsEnemy;
+
+        if (singlePlayer)
         {
             NextFallingBlock();
             NextFallingBlock();
@@ -78,12 +84,11 @@ public class Player : DrawableGameComponent
 
     public override void Draw(GameTime gameTime)
     {
-        GraphicsDevice.Clear(Color.Black);
-
         _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
-        _spriteBatch.Draw(_boardTexture, new Rectangle((int)RenderPosition.X, (int)RenderPosition.Y,
-            (int)(_boardTexture.Width * _game.Scale), (int)(_boardTexture.Height * _game.Scale)), Color.White);
+        if (_singlePlayer)
+            _spriteBatch.Draw(_boardTexture, new Rectangle((int)RenderPosition.X, (int)RenderPosition.Y,
+                (int)(_boardTexture.Width * _game.Scale), (int)(_boardTexture.Height * _game.Scale)), Color.White);
 
         for (int row = 0; row < Const.Rows; row++)
         {
@@ -140,29 +145,45 @@ public class Player : DrawableGameComponent
 
         if (_nextBlockOrigin != TileType.Empty)
         {
-            int x = (int)(RenderPosition.X + 7 * (16 * _game.Scale) + 8 * _game.Scale);
+            int x = _vsEnemy
+                ? (int)(RenderPosition.X + -1 * (16 * _game.Scale))
+                : (int)(RenderPosition.X + 7 * (16 * _game.Scale) + 8 * _game.Scale);
+
             int y = (int)(RenderPosition.Y + 0 * (16 * _game.Scale) + 14 * _game.Scale);
+
             RenderTile(_nextBlockOrigin, x, y);
         }
 
         if (_nextBlockOrbit != TileType.Empty)
         {
-            int x = (int)(RenderPosition.X + 7 * (16 * _game.Scale) + 8 * _game.Scale);
+            int x = _vsEnemy
+                ? (int)(RenderPosition.X + -1 * (16 * _game.Scale))
+                : (int)(RenderPosition.X + 7 * (16 * _game.Scale) + 8 * _game.Scale);
+
             int y = (int)(RenderPosition.Y + 1 * (16 * _game.Scale) + 14 * _game.Scale);
+
             RenderTile(_nextBlockOrbit, x, y);
         }
 
         if (_nextNextBlockOrigin != TileType.Empty)
         {
-            int x = (int)(RenderPosition.X + 7 * (16 * _game.Scale) + 8 * _game.Scale);
+            int x = _vsEnemy
+                ? (int)(RenderPosition.X + -1 * (16 * _game.Scale))
+                : (int)(RenderPosition.X + 7 * (16 * _game.Scale) + 8 * _game.Scale);
+
             int y = (int)(RenderPosition.Y + 2 * (16 * _game.Scale) + 18 * _game.Scale);
+
             RenderTile(_nextNextBlockOrigin, x, y);
         }
 
         if (_nextNextBlockOrbit != TileType.Empty)
         {
-            int x = (int)(RenderPosition.X + 7 * (16 * _game.Scale) + 8 * _game.Scale);
+            int x = _vsEnemy
+                ? (int)(RenderPosition.X + -1 * (16 * _game.Scale))
+                : (int)(RenderPosition.X + 7 * (16 * _game.Scale) + 8 * _game.Scale);
+
             int y = (int)(RenderPosition.Y + 3 * (16 * _game.Scale) + 18 * _game.Scale);
+
             RenderTile(_nextNextBlockOrbit, x, y);
         }
 

@@ -11,6 +11,9 @@ public class RankedMatchScreen : GameScreen
     private readonly PolygonBazookaGame _game;
     private readonly SpriteBatch _spriteBatch;
 
+    private readonly Player _enemyPlayer;
+    private bool _enemyInitialized;
+
     private readonly TileType[,] _enemyBoard;
     private int _enemyBoardOffsetX;
 
@@ -24,6 +27,15 @@ public class RankedMatchScreen : GameScreen
     {
         _game = game;
         _spriteBatch = new SpriteBatch(GraphicsDevice);
+
+        _lastWindowWidth = Game.Window.ClientBounds.Width;
+        _lastWindowHeight = Game.Window.ClientBounds.Height;
+
+        _enemyPlayer = new Player(game, false, true)
+        {
+            // TODO: render correctly
+            RenderPosition = new(242 * game.Scale, 0),
+        };
 
         _enemyBoard = ResetBoard();
 
@@ -58,20 +70,22 @@ public class RankedMatchScreen : GameScreen
         _spriteBatch.Draw(_boards, _boardsBounds, Color.White);
 
         // render enemy tiles
-        for (int row = 0; row < Const.Rows; row++)
-        {
-            for (int col = 0; col < Const.Cols; col++)
-            {
-                if (_enemyBoard[row, col] == TileType.Empty)
-                    continue;
+        // for (int row = 0; row < Const.Rows; row++)
+        // {
+        //     for (int col = 0; col < Const.Cols; col++)
+        //     {
+        //         if (_enemyBoard[row, col] == TileType.Empty)
+        //             continue;
+        //
+        //         int x = (int)(_boardsBounds.X + _boardsBounds.Width - (_enemyBoardOffsetX - col * 16 * _game.Scale));
+        //         int y = (int)(_boardsBounds.Y + (row + 1) * (16 * _game.Scale));
+        //
+        //         _spriteBatch.Draw(_game.Textures.GetTile(_enemyBoard[row, col]),
+        //             new Rectangle(x, y, (int)(16 * _game.Scale), (int)(16 * _game.Scale)), Color.White);
+        //     }
+        // }
 
-                int x = (int)(_boardsBounds.X + _boardsBounds.Width - (_enemyBoardOffsetX - col * 16 * _game.Scale));
-                int y = (int)(_boardsBounds.Y + (row + 1) * (16 * _game.Scale));
-
-                _spriteBatch.Draw(_game.Textures.GetTile(_enemyBoard[row, col]),
-                    new Rectangle(x, y, (int)(16 * _game.Scale), (int)(16 * _game.Scale)), Color.White);
-            }
-        }
+        _enemyPlayer.Draw(gameTime);
 
         _spriteBatch.End();
 
