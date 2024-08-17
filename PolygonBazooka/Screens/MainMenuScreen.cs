@@ -274,15 +274,9 @@ public class MainMenuScreen : GameScreen
 
             if (_rankedButtonHovered)
             {
-                // _currentMenu = Menus.RankedMenu;
-                // for debug
-                _game.ChangeGameState(GameState.RankedPlaying);
+                _game.LoadScreen(ScreenName.RankedMenu);
             }
         }
-    }
-
-    private void UpdateRankedMenu(GameTime gameTime, MouseState mouseState, Rectangle mousePosition)
-    {
     }
 
     private void UpdateConfigMenu(GameTime gameTime, MouseState mouseState, Rectangle mousePosition)
@@ -565,10 +559,6 @@ public class MainMenuScreen : GameScreen
 
             case Menus.MultiplayerMenu:
                 UpdateMultiplayerMenu(gameTime, mouseState, mousePosition);
-                break;
-
-            case Menus.RankedMenu:
-                UpdateRankedMenu(gameTime, mouseState, mousePosition);
                 break;
 
             case Menus.ConfigMenu:

@@ -29,6 +29,7 @@ namespace PolygonBazooka
         public readonly Preferences Preferences = new();
 
         public readonly Authentication Authentication = new();
+        public readonly RankedSocket RankedSocket;
 
         public readonly Textures Textures;
 
@@ -54,10 +55,14 @@ namespace PolygonBazooka
             IsFixedTimeStep = false;
 
             Components.Add(_screenManager);
+            
+            RankedSocket = new(this);
 
             // DEBUG
             // Authentication.LoginAsync("test", "test", true).Wait();
             // Authentication.RegisterAsync("test", "test", "test@test.test").Wait();
+
+            // RankedSocket.ConnectAsync().Wait();
         }
 
         protected override void Initialize()
@@ -93,13 +98,12 @@ namespace PolygonBazooka
                     throw new ArgumentOutOfRangeException(nameof(newState), newState, null);
             }
         }
-
         protected override void LoadContent()
         {
             LoadScreen(ScreenName.MainMenu);
         }
 
-        private void LoadScreen(ScreenName screen)
+        public void LoadScreen(ScreenName screen)
         {
             _screenManager.LoadScreen(_screens[screen]);
         }
