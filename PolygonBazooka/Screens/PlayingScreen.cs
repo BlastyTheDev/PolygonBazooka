@@ -5,8 +5,6 @@ using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended.Screens;
 using PolygonBazooka.Elements;
 
-// ReSharper disable PossibleLossOfFraction
-
 namespace PolygonBazooka.Screens;
 
 public class PlayingScreen(PolygonBazookaGame game) : GameScreen(game)
@@ -52,7 +50,7 @@ public class PlayingScreen(PolygonBazookaGame game) : GameScreen(game)
 
         _localPlayer = new(game, true)
         {
-            RenderPosition = new(_lastWindowWidth / 2 - 78 * game.Scale, _lastWindowHeight / 2 - 78 * game.Scale),
+            RenderPosition = new(_lastWindowWidth / 2f - 78 * game.Scale, _lastWindowHeight / 2f - 78 * game.Scale),
         };
 
         base.LoadContent();
@@ -209,8 +207,8 @@ public class PlayingScreen(PolygonBazookaGame game) : GameScreen(game)
             _lastWindowWidth = Game.Window.ClientBounds.Width;
             _lastWindowHeight = Game.Window.ClientBounds.Height;
 
-            _localPlayer.RenderPosition = new(_lastWindowWidth / 2 - 78 * game.Scale,
-                _lastWindowHeight / 2 - 78 * game.Scale);
+            _localPlayer.RenderPosition = new(_lastWindowWidth / 2f - 78 * game.Scale,
+                _lastWindowHeight / 2f - 78 * game.Scale);
         }
 
         if (keyboardState.IsKeyDown(game.Preferences.RetryKey) && !_retryPressed)
@@ -223,7 +221,7 @@ public class PlayingScreen(PolygonBazookaGame game) : GameScreen(game)
         {
             _localPlayer = new(game, true)
             {
-                RenderPosition = new(_lastWindowWidth / 2 - 78 * game.Scale, _lastWindowHeight / 2 - 78 * game.Scale),
+                RenderPosition = new(_lastWindowWidth / 2f - 78 * game.Scale, _lastWindowHeight / 2f - 78 * game.Scale),
             };
             _retryPressed = false;
         }

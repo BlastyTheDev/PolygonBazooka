@@ -32,6 +32,7 @@ public class Player : DrawableGameComponent
     public Vector2 RenderPosition;
 
     private readonly SpriteBatch _spriteBatch;
+    private readonly bool _localSpriteBatch;
 
     private readonly Texture2D _boardTexture;
 
@@ -54,7 +55,8 @@ public class Player : DrawableGameComponent
     private readonly bool _singlePlayer;
     private readonly bool _vsEnemy;
 
-    public Player(PolygonBazookaGame game, bool singlePlayer, bool vsEnemy = false) : base(game)
+    public Player(PolygonBazookaGame game, bool singlePlayer, bool vsEnemy = false,
+        SpriteBatch spriteBatch = null) : base(game)
     {
         _game = game;
 
@@ -75,7 +77,8 @@ public class Player : DrawableGameComponent
             NextFallingBlock();
         }
 
-        _spriteBatch = new(GraphicsDevice);
+        _localSpriteBatch = spriteBatch == null;
+        _spriteBatch = spriteBatch ?? new(GraphicsDevice);
 
         _boardTexture = Game.Content.Load<Texture2D>("Textures/board");
 
@@ -84,7 +87,8 @@ public class Player : DrawableGameComponent
 
     public override void Draw(GameTime gameTime)
     {
-        _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+        if (_localSpriteBatch)
+            _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
         if (_singlePlayer)
             _spriteBatch.Draw(_boardTexture, new Rectangle((int)RenderPosition.X, (int)RenderPosition.Y,
@@ -198,7 +202,8 @@ public class Player : DrawableGameComponent
                 (int)(48 * _game.Scale), (int)(48 * _game.Scale)), Color.White);
         }
 
-        _spriteBatch.End();
+        if (_localSpriteBatch)
+            _spriteBatch.End();
 
         _clearAnimationLastFrameTime += gameTime.ElapsedGameTime.TotalMilliseconds;
 

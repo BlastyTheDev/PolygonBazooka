@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended.Screens;
+using PolygonBazooka.Networking;
 
 namespace PolygonBazooka.Screens;
 
@@ -22,7 +23,7 @@ public class RankedMenuScreen : GameScreen
         
         _font = game.Content.Load<SpriteFont>("Fonts/Tiny5");
         
-        game.RankedSocket.JoinQueueAsync().Wait();
+        game.RankedSocket.SendAsync(RankedSocket.JoinQueue).Wait();
         _inQueue = true;
     }
 
