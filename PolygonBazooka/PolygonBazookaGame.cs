@@ -130,6 +130,8 @@ namespace PolygonBazooka
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);
+            
+            RankedSocket.DisconnectAsync().Wait();
 
             Preferences.Save();
             Authentication.Dispose();

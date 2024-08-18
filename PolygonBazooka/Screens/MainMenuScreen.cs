@@ -274,7 +274,8 @@ public class MainMenuScreen : GameScreen
 
             if (_rankedButtonHovered)
             {
-                _game.LoadScreen(ScreenName.RankedMenu);
+                // _game.LoadScreen(ScreenName.RankedMenu);
+                _game.ChangeGameState(GameState.RankedPlaying);
             }
         }
     }

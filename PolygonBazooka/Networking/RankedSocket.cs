@@ -12,6 +12,11 @@ public class RankedSocket(PolygonBazookaGame game)
     public const string LeaveQueue = "<LEAVEQUEUE>";
     public const string Forfeit = "<FORFEIT>";
 
+    public const string ConnectionInitialized = "<INITIALIZED>";
+    public const string ConnectionRejected = "<REJECTED>";
+    
+    public const string RequestDisconnect = "<DISCONNECT>";
+
     public const string ChatPrefix = "MESSAGE:";
 
     public const string MoveLeft = "l";
@@ -27,8 +32,21 @@ public class RankedSocket(PolygonBazookaGame game)
 
     public ClientWebSocket Socket { get; private set; }
 
+    public bool Connected
+    {
+        get
+        {
+            if (Socket == null)
+                return false;
+            return Socket.State == WebSocketState.Open;
+        }
+    }
+
     public async Task ConnectAsync()
     {
+        if (!game.Authentication.IsLoggedIn)
+            return;
+
         string uri = "ws://localhost:8080/api/ws/ranked";
 
         Socket = new ClientWebSocket();
@@ -37,11 +55,28 @@ public class RankedSocket(PolygonBazookaGame game)
 
         clientWebSocketOptions.SetRequestHeader("Cookie", "token=" + game.Authentication.Token.Value);
 
-        await Socket.ConnectAsync(new(uri), CancellationToken.None);
+        try
+        {
+            await Socket.ConnectAsync(new(uri), CancellationToken.None);
+        }
+        catch (Exception)
+        {
+            return;
+        }
+
+        Console.WriteLine("wait");
+        var result = await ReceiveAsync();
+        Console.WriteLine("res" + result);
+
+        if (result != ConnectionInitialized)
+            await DisconnectAsync();
     }
 
     public async Task<string> ReceiveAsync()
     {
+        if (!Connected)
+            return null;
+
         var buffer = new byte[4096];
         var segment = new ArraySegment<byte>(buffer);
 
@@ -60,16 +95,27 @@ public class RankedSocket(PolygonBazookaGame game)
 
     public async Task DisconnectAsync()
     {
+        if (!Connected)
+            return;
+
+        await SendAsync(RequestDisconnect);
+
         await Socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "disconnect", CancellationToken.None);
     }
 
     public async Task ChatAsync(string message)
     {
+        if (!Connected)
+            return;
+
         await SendAsync(ChatPrefix + message);
     }
 
     public async Task SendAsync(string message)
     {
+        if (!Connected)
+            return;
+
         byte[] messageBytes = Encoding.UTF8.GetBytes(message);
         var messageSegment = new ArraySegment<byte>(messageBytes);
 

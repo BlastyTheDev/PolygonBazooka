@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -21,6 +22,9 @@ public class Authentication
 
     public async Task<bool> LoginAsync(string username, string password, bool stayLoggedIn = false)
     {
+        if (IsLoggedIn)
+            return true;
+
         _stayLoggedIn = stayLoggedIn;
 
         var clientHandler = new HttpClientHandler();
@@ -33,10 +37,19 @@ public class Authentication
         request.Content = new StringContent("{\"username\":\"" + username + "\",\"password\":\"" + password + "\"}",
             Encoding.UTF8, "application/json");
 
-        var response = await client.SendAsync(request);
-        
+        HttpResponseMessage response;
+
+        try
+        {
+            response = await client.SendAsync(request);
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+
         var cookies = clientHandler.CookieContainer.GetCookies(new(uri));
-        
+
         foreach (Cookie cookie in cookies)
         {
             if (cookie.Name == "token")
@@ -51,22 +64,34 @@ public class Authentication
 
     public async Task<bool> RegisterAsync(string username, string password, string email, bool stayLoggedIn = false)
     {
+        if (IsLoggedIn)
+            return true;
+
         _stayLoggedIn = stayLoggedIn;
 
         var clientHandler = new HttpClientHandler();
         var client = new HttpClient(clientHandler);
 
         string uri = "http://localhost:8080/api/auth/register";
-        
+
         var request = new HttpRequestMessage(HttpMethod.Post, uri);
         request.Content = new StringContent(
             $"{{\"username\":\"{username}\",\"password\":\"{password}\",\"email\":\"{email}\"}}",
             Encoding.UTF8, "application/json");
 
-        var response = await client.SendAsync(request);
+        HttpResponseMessage response;
+
+        try
+        {
+            response = await client.SendAsync(request);
+        }
+        catch (Exception)
+        {
+            return false;
+        }
 
         var cookies = clientHandler.CookieContainer.GetCookies(new(uri));
-        
+
         foreach (Cookie cookie in cookies)
         {
             if (cookie.Name == "token")
@@ -91,7 +116,7 @@ public class Authentication
     {
         if (!_stayLoggedIn)
             Logout();
-        else
+        else if (IsLoggedIn)
             File.WriteAllText("token.txt", Token.Value);
     }
 }
